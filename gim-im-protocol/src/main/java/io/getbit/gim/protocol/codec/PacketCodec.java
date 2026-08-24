@@ -195,11 +195,14 @@ public class PacketCodec {
     // ====================== 通知消息构建 ======================
 
     public static ImProto.Packet buildFriendRequestNotifyPacket(String fromUserId, String toUserId,
-                                                                 String nickname, String avatar, String message) {
+                                                                 String nickname, String avatar, String message,
+                                                                 String requestId, String logId) {
         ImProto.FriendRequestNotify.Builder builder = ImProto.FriendRequestNotify.newBuilder()
                 .setFromUserId(fromUserId)
                 .setToUserId(toUserId)
-                .setMessage(message != null ? message : "");
+                .setMessage(message != null ? message : "")
+                .setRequestId(requestId != null ? requestId : "")
+                .setLogId(logId != null ? logId : "");
         if (nickname != null) { builder.setNickname(nickname); }
         if (avatar != null) { builder.setAvatar(avatar); }
         return create(Cmd.FRIEND_REQUEST_NOTIFY, 0, builder.build());

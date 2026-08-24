@@ -116,6 +116,8 @@ message FriendRequestNotify {
   string nickname   = 3;
   string avatar     = 4;
   string message    = 5;  // 验证消息
+  string requestId  = 6;  // 申请ID（服务端创建申请时生成，客户端本地持久化后用于同意/拒绝）
+  string logId      = 7;  // 消息日志ID（服务端写入 im_friend_request_log 后回填，客户端用于本地日志去重）
 }
 
 // cmd = 31: 好友状态变更通知

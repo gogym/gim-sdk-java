@@ -47,14 +47,17 @@ public class FriendNotifyService extends BaseNotifyService {
      * @param nickname   申请人昵称
      * @param avatar     申请人头像
      * @param message    申请留言
+     * @param requestId  申请ID（客户端本地持久化后用于同意/拒绝）
+     * @param logId      消息日志ID（服务端写入日志后回填，客户端用于本地日志去重）
      */
     public void notifyFriendRequest(String fromUserId, String toUserId,
-                                    String nickname, String avatar, String message) {
+                                    String nickname, String avatar, String message,
+                                    String requestId, String logId) {
         ImProto.Packet packet = PacketCodec.buildFriendRequestNotifyPacket(
-                fromUserId, toUserId, nickname, avatar, message);
+                fromUserId, toUserId, nickname, avatar, message, requestId, logId);
         deliverToUser(toUserId, packet);
 
-        logger.debug("好友申请通知已发送: from={}, to={}", fromUserId, toUserId);
+        logger.debug("好友申请通知已发送: from={}, to={}, requestId={}", fromUserId, toUserId, requestId);
     }
 
     /**
