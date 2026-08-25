@@ -81,6 +81,14 @@ public class ChatServerHandler extends SimpleChannelInboundHandler<ImProto.Packe
 
         // 已认证状态：按 cmd 路由
         String userId = authHandler.getUserId(channel);
+
+        // 已认证连接再次收到 BIND_REQ：客户端重连/网络切换导致的重复绑定
+        // 回复 BIND_RESP 确认连接仍有效，避免客户端因等待响应超时而新建连接触发互踢
+        if (cmd == Cmd.BIND_REQ) {
+            authHandler.handleRebind(packet, channel);
+            return;
+        }
+
         facade.getMessageDispatcher().dispatch(packet, channel, userId);
     }
 
@@ -109,10 +117,22 @@ public class ChatServerHandler extends SimpleChannelInboundHandler<ImProto.Packe
         Channel channel = ctx.channel();
 
         ConnectionInfo connInfo = facade.getChannelManager().unbindByChannelId(channel.id().asLongText());
-        String userId = connInfo != null ? connInfo.userId() : null;
-        DeviceType device = connInfo != null ? connInfo.device() : null;
+        String userId = connInfo != null ? connInfo.userId() : authHandler.getUserId(channel);
+        DeviceType device = connInfo != null ? connInfo.device() : authHandler.getDevice(channel);
 
         if (userId != null) {
+            if (connInfo == null) {
+                // 连接已提前解绑（被新连接替换或服务端主动踢人），无需重复清理，仅记录日志
+                if (Boolean.TRUE.equals(channel.attr(ConnectionAuthHandler.KICKED_BY_NEW_KEY).get())) {
+                    logger.info("[{}] 被新连接替换下线, userId={}, device={}",
+                            channel.id().asShortText(), userId, device);
+                } else {
+                    logger.info("[{}] 连接已提前解绑后断开, userId={}, device={}",
+                            channel.id().asShortText(), userId, device);
+                }
+                return;
+            }
+
             logger.info("[{}] 用户断开, userId={}, device={}",
                     channel.id().asShortText(), userId, device);
 

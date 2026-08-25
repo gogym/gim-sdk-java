@@ -23,6 +23,7 @@ message BindRequest {
   string userId   = 1;   // 用户ID
   string token    = 2;   // JWT token，服务端校验
   string device   = 3;   // 设备类型: mobile / desktop / web / pad
+  string deviceId = 4;   // 设备唯一标识（客户端持久化UUID），用于区分同设备重连与异设备顶号
 }
 
 // cmd = 2: 绑定响应

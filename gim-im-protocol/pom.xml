@@ -29,9 +29,4 @@
         </dependency>
     </dependencies>
 
-    <!--
-        ImProto.java 已通过 protoc 预编译并包含在源码中。
-        如需重新生成，执行:
-        protoc -java_out=src/main/java -proto_path=src/main/proto ImProto.proto
-    -->
 </project>

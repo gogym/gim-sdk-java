@@ -51,6 +51,17 @@ public class ConnectionAuthHandler {
      */
     public static final AttributeKey<DeviceType> DEVICE_KEY = AttributeKey.valueOf("deviceType");
 
+    /**
+     * Channel 属性：设备唯一标识（客户端持久化 UUID）
+     * 互踢时用于区分"同一台设备重连"（同 deviceId，静默替换）与"另一台设备顶号"（异 deviceId，立即踢）
+     */
+    public static final AttributeKey<String> DEVICE_ID_KEY = AttributeKey.valueOf("deviceId");
+
+    /**
+     * Channel 属性：被新连接替换标记（仅用于日志区分）
+     */
+    public static final AttributeKey<Boolean> KICKED_BY_NEW_KEY = AttributeKey.valueOf("kickedByNew");
+
     private final ImTokenVerifier tokenVerifier;
     private final ChannelManager channelManager;
     private final GimProperties config;
@@ -111,12 +122,11 @@ public class ConnectionAuthHandler {
             channel.attr(AUTH_KEY).set(true);
             channel.attr(USER_ID_KEY).set(userId);
             channel.attr(DEVICE_KEY).set(device);
+            channel.attr(DEVICE_ID_KEY).set(bindReq.getDeviceId());
 
-            // 7. 踢掉旧连接（如果有）
+            // 7. 处理旧连接：同设备重连静默替换，异设备顶号立即踢下线
             if (oldChannel != null && oldChannel.isActive()) {
-                logger.info("同设备互踢, userId={}, device={}, oldChannel={}", userId, device, oldChannel.id().asShortText());
-                ImProto.Packet kickPacket = PacketCodec.buildKickNotify(409, "kicked by same device login");
-                oldChannel.writeAndFlush(kickPacket).addListener(ChannelFutureListener.CLOSE);
+                kickOldChannel(userId, device, bindReq.getDeviceId(), oldChannel);
             }
 
             // 8. 回复绑定成功
@@ -134,6 +144,82 @@ public class ConnectionAuthHandler {
             sendBindFail(channel, packet.getSequence(), 500, "internal error");
             return false;
         }
+    }
+
+    /**
+     * 处理已认证连接上的重复绑定请求（客户端断线重连/原地重绑）
+     * <p>
+     * 客户端在已认证连接上重发 BIND_REQ，通常是重连流程的一部分：
+     * 1. 回复 BIND_RESP 确认连接仍有效，避免客户端因等待响应超时而新建连接触发互踢；
+     * 2. 续期用户路由，避免路由过期导致消息无法投递。
+     *
+     * @param packet  重复的 BIND_REQ 包
+     * @param channel 已认证通道
+     */
+    public void handleRebind(ImProto.Packet packet, Channel channel) {
+        String userId = getUserId(channel);
+        if (userId == null) {
+            return;
+        }
+
+        // 防御：重复绑定携带的 userId 必须与当前连接一致
+        try {
+            ImProto.BindRequest bindReq = PacketCodec.parseBindRequest(packet);
+            if (!userId.equals(bindReq.getUserId())) {
+                logger.warn("已认证连接重复绑定 userId 不一致, 忽略: channelId={}, current={}, req={}",
+                        channel.id().asShortText(), userId, bindReq.getUserId());
+                return;
+            }
+        } catch (Exception e) {
+            logger.warn("已认证连接重复绑定解析失败, 忽略: channelId={}", channel.id().asShortText(), e);
+            return;
+        }
+
+        // 续期用户路由，防止路由过期导致消息无法投递
+        userRouteService.register(userId);
+
+        // 回复 BIND_RESP，确认连接仍有效
+        ImProto.Packet resp = PacketCodec.buildBindResp(packet.getSequence(), config.getServerId());
+        channel.writeAndFlush(resp);
+
+        logger.info("已认证连接重复绑定, 返回 BIND_RESP: userId={}, channelId={}",
+                userId, channel.id().asShortText());
+    }
+
+    /**
+     * 处理同设备互踢（新连接替换旧连接）
+     * <p>
+     * 客户端断线重连时，旧连接往往是"半开连接"：客户端已失联但 TCP 未被感知断开。
+     * 若此时仍向旧连接发送 KickNotify，客户端 SDK 会误判为"被踢/账号在别处登录"，
+     * 从而停止重连，导致重连无法完成。
+     * <p>
+     * 判定完全基于客户端携带的 deviceId（设备唯一标识，客户端必传）：
+     * - 新旧连接 deviceId 相同 → 同一台设备重连，静默替换，不发送 KickNotify；
+     * - 否则（不同或缺失）→ 另一台设备顶号，立即发送 KickNotify(409) 并关闭。
+     *
+     * @param userId      用户ID
+     * @param device      设备类型
+     * @param newDeviceId 新连接携带的设备唯一标识
+     * @param oldChannel  旧连接
+     */
+    private void kickOldChannel(String userId, DeviceType device, String newDeviceId, Channel oldChannel) {
+        oldChannel.attr(KICKED_BY_NEW_KEY).set(true);
+
+        String oldDeviceId = oldChannel.attr(DEVICE_ID_KEY).get();
+
+        // 同一台设备重连 → 静默替换，不发送 KickNotify
+        if (newDeviceId != null && newDeviceId.equals(oldDeviceId)) {
+            logger.info("同设备互踢(同一设备重连, 静默替换), userId={}, device={}, oldChannel={}",
+                    userId, device, oldChannel.id().asShortText());
+            oldChannel.close();
+            return;
+        }
+
+        // 另一台设备顶号 → 立即踢下线
+        logger.info("同设备互踢(异设备顶号), userId={}, device={}, oldChannel={}, oldDeviceId={}, newDeviceId={}",
+                userId, device, oldChannel.id().asShortText(), oldDeviceId, newDeviceId);
+        ImProto.Packet kickPacket = PacketCodec.buildKickNotify(409, "kicked by same device login");
+        oldChannel.writeAndFlush(kickPacket).addListener(ChannelFutureListener.CLOSE);
     }
 
     /**
