@@ -194,12 +194,12 @@ public class PacketCodec {
 
     // ====================== 通知消息构建 ======================
 
-    public static ImProto.Packet buildFriendRequestNotifyPacket(String fromUserId, String toUserId,
+    public static ImProto.Packet buildFriendRequestNotifyPacket(String senderId, String receiverId,
                                                                  String nickname, String avatar, String message,
                                                                  String requestId, String logId) {
         ImProto.FriendRequestNotify.Builder builder = ImProto.FriendRequestNotify.newBuilder()
-                .setFromUserId(fromUserId)
-                .setToUserId(toUserId)
+                .setSenderId(senderId)
+                .setReceiverId(receiverId)
                 .setMessage(message != null ? message : "")
                 .setRequestId(requestId != null ? requestId : "")
                 .setLogId(logId != null ? logId : "");
@@ -208,10 +208,10 @@ public class PacketCodec {
         return create(Cmd.FRIEND_REQUEST_NOTIFY, 0, builder.build());
     }
 
-    public static ImProto.Packet buildFriendStatusNotifyPacket(String userId, String toUserId, int status) {
+    public static ImProto.Packet buildFriendStatusNotifyPacket(String userId, String receiverId, int status) {
         ImProto.FriendStatusNotify body = ImProto.FriendStatusNotify.newBuilder()
                 .setUserId(userId)
-                .setToUserId(toUserId)
+                .setReceiverId(receiverId)
                 .setStatus(status)
                 .build();
         return create(Cmd.FRIEND_STATUS_NOTIFY, 0, body);
@@ -271,22 +271,22 @@ public class PacketCodec {
         return create(Cmd.MSG_RECALL_NOTIFY, 0, body);
     }
 
-    public static ImProto.Packet buildRtcSignalPacket(int signalType, String fromUserId,
-                                                       String toUserId, String callId, String payload) {
+    public static ImProto.Packet buildRtcSignalPacket(int signalType, String senderId,
+                                                       String receiverId, String callId, String payload) {
         ImProto.RtcSignal.Builder builder = ImProto.RtcSignal.newBuilder()
                 .setSignalType(signalType)
-                .setFromUserId(fromUserId != null ? fromUserId : "")
-                .setToUserId(toUserId != null ? toUserId : "");
+                .setSenderId(senderId != null ? senderId : "")
+                .setReceiverId(receiverId != null ? receiverId : "");
         if (callId != null) { builder.setCallId(callId); }
         if (payload != null) { builder.setPayload(payload); }
         return create(Cmd.RTC_SIGNAL, 0, builder.build());
     }
 
-    public static ImProto.Packet buildRtcGroupPacket(int signalType, String fromUserId,
+    public static ImProto.Packet buildRtcGroupPacket(int signalType, String senderId,
                                                       String groupId, String callId, String payload) {
         ImProto.RtcGroup.Builder builder = ImProto.RtcGroup.newBuilder()
                 .setSignalType(signalType)
-                .setFromUserId(fromUserId != null ? fromUserId : "")
+                .setSenderId(senderId != null ? senderId : "")
                 .setGroupId(groupId != null ? groupId : "");
         if (callId != null) { builder.setCallId(callId); }
         if (payload != null) { builder.setPayload(payload); }

@@ -42,38 +42,38 @@ public class FriendNotifyService extends BaseNotifyService {
      * 发送好友申请通知
      * 当 A 申请加 B 为好友时，推送通知给 B
      *
-     * @param fromUserId 申请人ID
-     * @param toUserId   被申请方ID
+     * @param senderId   申请人ID
+     * @param receiverId 被申请方ID
      * @param nickname   申请人昵称
      * @param avatar     申请人头像
      * @param message    申请留言
      * @param requestId  申请ID（客户端本地持久化后用于同意/拒绝）
      * @param logId      消息日志ID（服务端写入日志后回填，客户端用于本地日志去重）
      */
-    public void notifyFriendRequest(String fromUserId, String toUserId,
+    public void notifyFriendRequest(String senderId, String receiverId,
                                     String nickname, String avatar, String message,
                                     String requestId, String logId) {
         ImProto.Packet packet = PacketCodec.buildFriendRequestNotifyPacket(
-                fromUserId, toUserId, nickname, avatar, message, requestId, logId);
-        deliverToUser(toUserId, packet);
+                senderId, receiverId, nickname, avatar, message, requestId, logId);
+        deliverToUser(receiverId, packet);
 
-        logger.debug("好友申请通知已发送: from={}, to={}, requestId={}", fromUserId, toUserId, requestId);
+        logger.debug("好友申请通知已发送: from={}, to={}, requestId={}", senderId, receiverId, requestId);
     }
 
     /**
      * 发送好友申请处理结果通知
      * 当 B 同意/拒绝 A 的申请时，推送结果给 A
      *
-     * @param fromUserId 处理方ID（B）
-     * @param toUserId   申请人ID（A）
+     * @param senderId   处理方ID（B）
+     * @param receiverId 申请人ID（A）
      * @param accepted   是否同意
      */
-    public void notifyFriendRequestResult(String fromUserId, String toUserId, boolean accepted) {
+    public void notifyFriendRequestResult(String senderId, String receiverId, boolean accepted) {
         ImProto.Packet packet = PacketCodec.buildFriendStatusNotifyPacket(
-                fromUserId, toUserId, accepted ? 1 : 2);
-        deliverToUser(toUserId, packet);
+                senderId, receiverId, accepted ? 1 : 2);
+        deliverToUser(receiverId, packet);
 
-        logger.debug("好友申请结果通知已发送: from={}, to={}, accepted={}", fromUserId, toUserId, accepted);
+        logger.debug("好友申请结果通知已发送: from={}, to={}, accepted={}", senderId, receiverId, accepted);
     }
 
     /**

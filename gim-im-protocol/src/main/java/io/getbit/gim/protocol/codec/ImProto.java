@@ -7279,23 +7279,23 @@ java.lang.String defaultValue) {
 
     /**
      * <pre>
-     * 接收方userId
+     * 发送送达确认的用户ID（原接收方）
      * </pre>
      *
-     * <code>string fromUserId = 2;</code>
-     * @return The fromUserId.
+     * <code>string senderId = 2;</code>
+     * @return The senderId.
      */
-    java.lang.String getFromUserId();
+    java.lang.String getSenderId();
     /**
      * <pre>
-     * 接收方userId
+     * 发送送达确认的用户ID（原接收方）
      * </pre>
      *
-     * <code>string fromUserId = 2;</code>
-     * @return The bytes for fromUserId.
+     * <code>string senderId = 2;</code>
+     * @return The bytes for senderId.
      */
     com.google.protobuf.ByteString
-        getFromUserIdBytes();
+        getSenderIdBytes();
   }
   /**
    * <pre>
@@ -7324,7 +7324,7 @@ java.lang.String defaultValue) {
     }
     private DeliveryAck() {
       msgId_ = "";
-      fromUserId_ = "";
+      senderId_ = "";
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -7392,47 +7392,47 @@ java.lang.String defaultValue) {
       }
     }
 
-    public static final int FROMUSERID_FIELD_NUMBER = 2;
+    public static final int SENDERID_FIELD_NUMBER = 2;
     @SuppressWarnings("serial")
-    private volatile java.lang.Object fromUserId_ = "";
+    private volatile java.lang.Object senderId_ = "";
     /**
      * <pre>
-     * 接收方userId
+     * 发送送达确认的用户ID（原接收方）
      * </pre>
      *
-     * <code>string fromUserId = 2;</code>
-     * @return The fromUserId.
+     * <code>string senderId = 2;</code>
+     * @return The senderId.
      */
     @java.lang.Override
-    public java.lang.String getFromUserId() {
-      java.lang.Object ref = fromUserId_;
+    public java.lang.String getSenderId() {
+      java.lang.Object ref = senderId_;
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        fromUserId_ = s;
+        senderId_ = s;
         return s;
       }
     }
     /**
      * <pre>
-     * 接收方userId
+     * 发送送达确认的用户ID（原接收方）
      * </pre>
      *
-     * <code>string fromUserId = 2;</code>
-     * @return The bytes for fromUserId.
+     * <code>string senderId = 2;</code>
+     * @return The bytes for senderId.
      */
     @java.lang.Override
     public com.google.protobuf.ByteString
-        getFromUserIdBytes() {
-      java.lang.Object ref = fromUserId_;
+        getSenderIdBytes() {
+      java.lang.Object ref = senderId_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        fromUserId_ = b;
+        senderId_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
@@ -7456,8 +7456,8 @@ java.lang.String defaultValue) {
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(msgId_)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 1, msgId_);
       }
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(fromUserId_)) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 2, fromUserId_);
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(senderId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, senderId_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -7466,8 +7466,8 @@ java.lang.String defaultValue) {
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(msgId_)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(1, msgId_);
       }
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(fromUserId_)) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, fromUserId_);
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(senderId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, senderId_);
       }
       return size;
     }
@@ -7495,8 +7495,8 @@ java.lang.String defaultValue) {
 
       if (!getMsgId()
           .equals(other.getMsgId())) return false;
-      if (!getFromUserId()
-          .equals(other.getFromUserId())) return false;
+      if (!getSenderId()
+          .equals(other.getSenderId())) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -7510,8 +7510,8 @@ java.lang.String defaultValue) {
       hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + MSGID_FIELD_NUMBER;
       hash = (53 * hash) + getMsgId().hashCode();
-      hash = (37 * hash) + FROMUSERID_FIELD_NUMBER;
-      hash = (53 * hash) + getFromUserId().hashCode();
+      hash = (37 * hash) + SENDERID_FIELD_NUMBER;
+      hash = (53 * hash) + getSenderId().hashCode();
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -7648,7 +7648,7 @@ java.lang.String defaultValue) {
         super.clear();
         bitField0_ = 0;
         msgId_ = "";
-        fromUserId_ = "";
+        senderId_ = "";
         return this;
       }
 
@@ -7686,7 +7686,7 @@ java.lang.String defaultValue) {
           result.msgId_ = msgId_;
         }
         if (((from_bitField0_ & 0x00000002) != 0)) {
-          result.fromUserId_ = fromUserId_;
+          result.senderId_ = senderId_;
         }
       }
 
@@ -7707,8 +7707,8 @@ java.lang.String defaultValue) {
           bitField0_ |= 0x00000001;
           onChanged();
         }
-        if (!other.getFromUserId().isEmpty()) {
-          fromUserId_ = other.fromUserId_;
+        if (!other.getSenderId().isEmpty()) {
+          senderId_ = other.senderId_;
           bitField0_ |= 0x00000002;
           onChanged();
         }
@@ -7742,7 +7742,7 @@ java.lang.String defaultValue) {
                 break;
               } // case 10
               case 18: {
-                fromUserId_ = input.readStringRequireUtf8();
+                senderId_ = input.readStringRequireUtf8();
                 bitField0_ |= 0x00000002;
                 break;
               } // case 18
@@ -7855,22 +7855,22 @@ java.lang.String defaultValue) {
         return this;
       }
 
-      private java.lang.Object fromUserId_ = "";
+      private java.lang.Object senderId_ = "";
       /**
        * <pre>
-       * 接收方userId
+       * 发送送达确认的用户ID（原接收方）
        * </pre>
        *
-       * <code>string fromUserId = 2;</code>
-       * @return The fromUserId.
+       * <code>string senderId = 2;</code>
+       * @return The senderId.
        */
-      public java.lang.String getFromUserId() {
-        java.lang.Object ref = fromUserId_;
+      public java.lang.String getSenderId() {
+        java.lang.Object ref = senderId_;
         if (!(ref instanceof java.lang.String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          fromUserId_ = s;
+          senderId_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
@@ -7878,20 +7878,20 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * 接收方userId
+       * 发送送达确认的用户ID（原接收方）
        * </pre>
        *
-       * <code>string fromUserId = 2;</code>
-       * @return The bytes for fromUserId.
+       * <code>string senderId = 2;</code>
+       * @return The bytes for senderId.
        */
       public com.google.protobuf.ByteString
-          getFromUserIdBytes() {
-        java.lang.Object ref = fromUserId_;
+          getSenderIdBytes() {
+        java.lang.Object ref = senderId_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
-          fromUserId_ = b;
+          senderId_ = b;
           return b;
         } else {
           return (com.google.protobuf.ByteString) ref;
@@ -7899,49 +7899,49 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * 接收方userId
+       * 发送送达确认的用户ID（原接收方）
        * </pre>
        *
-       * <code>string fromUserId = 2;</code>
-       * @param value The fromUserId to set.
+       * <code>string senderId = 2;</code>
+       * @param value The senderId to set.
        * @return This builder for chaining.
        */
-      public Builder setFromUserId(
+      public Builder setSenderId(
           java.lang.String value) {
         java.util.Objects.requireNonNull(value);
-        fromUserId_ = value;
+        senderId_ = value;
         bitField0_ |= 0x00000002;
         onChanged();
         return this;
       }
       /**
        * <pre>
-       * 接收方userId
+       * 发送送达确认的用户ID（原接收方）
        * </pre>
        *
-       * <code>string fromUserId = 2;</code>
+       * <code>string senderId = 2;</code>
        * @return This builder for chaining.
        */
-      public Builder clearFromUserId() {
-        fromUserId_ = getDefaultInstance().getFromUserId();
+      public Builder clearSenderId() {
+        senderId_ = getDefaultInstance().getSenderId();
         bitField0_ = (bitField0_ & ~0x00000002);
         onChanged();
         return this;
       }
       /**
        * <pre>
-       * 接收方userId
+       * 发送送达确认的用户ID（原接收方）
        * </pre>
        *
-       * <code>string fromUserId = 2;</code>
-       * @param value The bytes for fromUserId to set.
+       * <code>string senderId = 2;</code>
+       * @param value The bytes for senderId to set.
        * @return This builder for chaining.
        */
-      public Builder setFromUserIdBytes(
+      public Builder setSenderIdBytes(
           com.google.protobuf.ByteString value) {
         java.util.Objects.requireNonNull(value);
         checkByteStringIsUtf8(value);
-        fromUserId_ = value;
+        senderId_ = value;
         bitField0_ |= 0x00000002;
         onChanged();
         return this;
@@ -11407,36 +11407,44 @@ java.lang.String defaultValue) {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>string fromUserId = 1;</code>
-     * @return The fromUserId.
+     * <pre>
+     * 申请人ID
+     * </pre>
+     *
+     * <code>string senderId = 1;</code>
+     * @return The senderId.
      */
-    java.lang.String getFromUserId();
+    java.lang.String getSenderId();
     /**
-     * <code>string fromUserId = 1;</code>
-     * @return The bytes for fromUserId.
+     * <pre>
+     * 申请人ID
+     * </pre>
+     *
+     * <code>string senderId = 1;</code>
+     * @return The bytes for senderId.
      */
     com.google.protobuf.ByteString
-        getFromUserIdBytes();
+        getSenderIdBytes();
 
     /**
      * <pre>
      * 被申请方ID（集群路由用）
      * </pre>
      *
-     * <code>string toUserId = 2;</code>
-     * @return The toUserId.
+     * <code>string receiverId = 2;</code>
+     * @return The receiverId.
      */
-    java.lang.String getToUserId();
+    java.lang.String getReceiverId();
     /**
      * <pre>
      * 被申请方ID（集群路由用）
      * </pre>
      *
-     * <code>string toUserId = 2;</code>
-     * @return The bytes for toUserId.
+     * <code>string receiverId = 2;</code>
+     * @return The bytes for receiverId.
      */
     com.google.protobuf.ByteString
-        getToUserIdBytes();
+        getReceiverIdBytes();
 
     /**
      * <code>string nickname = 3;</code>
@@ -11548,8 +11556,8 @@ java.lang.String defaultValue) {
       super(builder);
     }
     private FriendRequestNotify() {
-      fromUserId_ = "";
-      toUserId_ = "";
+      senderId_ = "";
+      receiverId_ = "";
       nickname_ = "";
       avatar_ = "";
       message_ = "";
@@ -11575,66 +11583,74 @@ java.lang.String defaultValue) {
               io.getbit.gim.protocol.codec.ImProto.FriendRequestNotify.class, io.getbit.gim.protocol.codec.ImProto.FriendRequestNotify.Builder.class);
     }
 
-    public static final int FROMUSERID_FIELD_NUMBER = 1;
+    public static final int SENDERID_FIELD_NUMBER = 1;
     @SuppressWarnings("serial")
-    private volatile java.lang.Object fromUserId_ = "";
+    private volatile java.lang.Object senderId_ = "";
     /**
-     * <code>string fromUserId = 1;</code>
-     * @return The fromUserId.
+     * <pre>
+     * 申请人ID
+     * </pre>
+     *
+     * <code>string senderId = 1;</code>
+     * @return The senderId.
      */
     @java.lang.Override
-    public java.lang.String getFromUserId() {
-      java.lang.Object ref = fromUserId_;
+    public java.lang.String getSenderId() {
+      java.lang.Object ref = senderId_;
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        fromUserId_ = s;
+        senderId_ = s;
         return s;
       }
     }
     /**
-     * <code>string fromUserId = 1;</code>
-     * @return The bytes for fromUserId.
+     * <pre>
+     * 申请人ID
+     * </pre>
+     *
+     * <code>string senderId = 1;</code>
+     * @return The bytes for senderId.
      */
     @java.lang.Override
     public com.google.protobuf.ByteString
-        getFromUserIdBytes() {
-      java.lang.Object ref = fromUserId_;
+        getSenderIdBytes() {
+      java.lang.Object ref = senderId_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        fromUserId_ = b;
+        senderId_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
 
-    public static final int TOUSERID_FIELD_NUMBER = 2;
+    public static final int RECEIVERID_FIELD_NUMBER = 2;
     @SuppressWarnings("serial")
-    private volatile java.lang.Object toUserId_ = "";
+    private volatile java.lang.Object receiverId_ = "";
     /**
      * <pre>
      * 被申请方ID（集群路由用）
      * </pre>
      *
-     * <code>string toUserId = 2;</code>
-     * @return The toUserId.
+     * <code>string receiverId = 2;</code>
+     * @return The receiverId.
      */
     @java.lang.Override
-    public java.lang.String getToUserId() {
-      java.lang.Object ref = toUserId_;
+    public java.lang.String getReceiverId() {
+      java.lang.Object ref = receiverId_;
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        toUserId_ = s;
+        receiverId_ = s;
         return s;
       }
     }
@@ -11643,18 +11659,18 @@ java.lang.String defaultValue) {
      * 被申请方ID（集群路由用）
      * </pre>
      *
-     * <code>string toUserId = 2;</code>
-     * @return The bytes for toUserId.
+     * <code>string receiverId = 2;</code>
+     * @return The bytes for receiverId.
      */
     @java.lang.Override
     public com.google.protobuf.ByteString
-        getToUserIdBytes() {
-      java.lang.Object ref = toUserId_;
+        getReceiverIdBytes() {
+      java.lang.Object ref = receiverId_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        toUserId_ = b;
+        receiverId_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
@@ -11894,11 +11910,11 @@ java.lang.String defaultValue) {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(fromUserId_)) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 1, fromUserId_);
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(senderId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, senderId_);
       }
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(toUserId_)) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 2, toUserId_);
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(receiverId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, receiverId_);
       }
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(nickname_)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 3, nickname_);
@@ -11919,11 +11935,11 @@ java.lang.String defaultValue) {
     }
     private int computeSerializedSize_0() {
       int size = 0;
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(fromUserId_)) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, fromUserId_);
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(senderId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, senderId_);
       }
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(toUserId_)) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, toUserId_);
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(receiverId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, receiverId_);
       }
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(nickname_)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(3, nickname_);
@@ -11964,10 +11980,10 @@ java.lang.String defaultValue) {
       }
       io.getbit.gim.protocol.codec.ImProto.FriendRequestNotify other = (io.getbit.gim.protocol.codec.ImProto.FriendRequestNotify) obj;
 
-      if (!getFromUserId()
-          .equals(other.getFromUserId())) return false;
-      if (!getToUserId()
-          .equals(other.getToUserId())) return false;
+      if (!getSenderId()
+          .equals(other.getSenderId())) return false;
+      if (!getReceiverId()
+          .equals(other.getReceiverId())) return false;
       if (!getNickname()
           .equals(other.getNickname())) return false;
       if (!getAvatar()
@@ -11989,10 +12005,10 @@ java.lang.String defaultValue) {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
-      hash = (37 * hash) + FROMUSERID_FIELD_NUMBER;
-      hash = (53 * hash) + getFromUserId().hashCode();
-      hash = (37 * hash) + TOUSERID_FIELD_NUMBER;
-      hash = (53 * hash) + getToUserId().hashCode();
+      hash = (37 * hash) + SENDERID_FIELD_NUMBER;
+      hash = (53 * hash) + getSenderId().hashCode();
+      hash = (37 * hash) + RECEIVERID_FIELD_NUMBER;
+      hash = (53 * hash) + getReceiverId().hashCode();
       hash = (37 * hash) + NICKNAME_FIELD_NUMBER;
       hash = (53 * hash) + getNickname().hashCode();
       hash = (37 * hash) + AVATAR_FIELD_NUMBER;
@@ -12138,8 +12154,8 @@ java.lang.String defaultValue) {
       public Builder clear() {
         super.clear();
         bitField0_ = 0;
-        fromUserId_ = "";
-        toUserId_ = "";
+        senderId_ = "";
+        receiverId_ = "";
         nickname_ = "";
         avatar_ = "";
         message_ = "";
@@ -12179,10 +12195,10 @@ java.lang.String defaultValue) {
       private void buildPartial0(io.getbit.gim.protocol.codec.ImProto.FriendRequestNotify result) {
         int from_bitField0_ = bitField0_;
         if (((from_bitField0_ & 0x00000001) != 0)) {
-          result.fromUserId_ = fromUserId_;
+          result.senderId_ = senderId_;
         }
         if (((from_bitField0_ & 0x00000002) != 0)) {
-          result.toUserId_ = toUserId_;
+          result.receiverId_ = receiverId_;
         }
         if (((from_bitField0_ & 0x00000004) != 0)) {
           result.nickname_ = nickname_;
@@ -12213,13 +12229,13 @@ java.lang.String defaultValue) {
 
       public Builder mergeFrom(io.getbit.gim.protocol.codec.ImProto.FriendRequestNotify other) {
         if (other == io.getbit.gim.protocol.codec.ImProto.FriendRequestNotify.getDefaultInstance()) return this;
-        if (!other.getFromUserId().isEmpty()) {
-          fromUserId_ = other.fromUserId_;
+        if (!other.getSenderId().isEmpty()) {
+          senderId_ = other.senderId_;
           bitField0_ |= 0x00000001;
           onChanged();
         }
-        if (!other.getToUserId().isEmpty()) {
-          toUserId_ = other.toUserId_;
+        if (!other.getReceiverId().isEmpty()) {
+          receiverId_ = other.receiverId_;
           bitField0_ |= 0x00000002;
           onChanged();
         }
@@ -12273,12 +12289,12 @@ java.lang.String defaultValue) {
                 done = true;
                 break;
               case 10: {
-                fromUserId_ = input.readStringRequireUtf8();
+                senderId_ = input.readStringRequireUtf8();
                 bitField0_ |= 0x00000001;
                 break;
               } // case 10
               case 18: {
-                toUserId_ = input.readStringRequireUtf8();
+                receiverId_ = input.readStringRequireUtf8();
                 bitField0_ |= 0x00000002;
                 break;
               } // case 18
@@ -12324,94 +12340,114 @@ java.lang.String defaultValue) {
       }
       private int bitField0_;
 
-      private java.lang.Object fromUserId_ = "";
+      private java.lang.Object senderId_ = "";
       /**
-       * <code>string fromUserId = 1;</code>
-       * @return The fromUserId.
+       * <pre>
+       * 申请人ID
+       * </pre>
+       *
+       * <code>string senderId = 1;</code>
+       * @return The senderId.
        */
-      public java.lang.String getFromUserId() {
-        java.lang.Object ref = fromUserId_;
+      public java.lang.String getSenderId() {
+        java.lang.Object ref = senderId_;
         if (!(ref instanceof java.lang.String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          fromUserId_ = s;
+          senderId_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
         }
       }
       /**
-       * <code>string fromUserId = 1;</code>
-       * @return The bytes for fromUserId.
+       * <pre>
+       * 申请人ID
+       * </pre>
+       *
+       * <code>string senderId = 1;</code>
+       * @return The bytes for senderId.
        */
       public com.google.protobuf.ByteString
-          getFromUserIdBytes() {
-        java.lang.Object ref = fromUserId_;
+          getSenderIdBytes() {
+        java.lang.Object ref = senderId_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
-          fromUserId_ = b;
+          senderId_ = b;
           return b;
         } else {
           return (com.google.protobuf.ByteString) ref;
         }
       }
       /**
-       * <code>string fromUserId = 1;</code>
-       * @param value The fromUserId to set.
+       * <pre>
+       * 申请人ID
+       * </pre>
+       *
+       * <code>string senderId = 1;</code>
+       * @param value The senderId to set.
        * @return This builder for chaining.
        */
-      public Builder setFromUserId(
+      public Builder setSenderId(
           java.lang.String value) {
         java.util.Objects.requireNonNull(value);
-        fromUserId_ = value;
+        senderId_ = value;
         bitField0_ |= 0x00000001;
         onChanged();
         return this;
       }
       /**
-       * <code>string fromUserId = 1;</code>
+       * <pre>
+       * 申请人ID
+       * </pre>
+       *
+       * <code>string senderId = 1;</code>
        * @return This builder for chaining.
        */
-      public Builder clearFromUserId() {
-        fromUserId_ = getDefaultInstance().getFromUserId();
+      public Builder clearSenderId() {
+        senderId_ = getDefaultInstance().getSenderId();
         bitField0_ = (bitField0_ & ~0x00000001);
         onChanged();
         return this;
       }
       /**
-       * <code>string fromUserId = 1;</code>
-       * @param value The bytes for fromUserId to set.
+       * <pre>
+       * 申请人ID
+       * </pre>
+       *
+       * <code>string senderId = 1;</code>
+       * @param value The bytes for senderId to set.
        * @return This builder for chaining.
        */
-      public Builder setFromUserIdBytes(
+      public Builder setSenderIdBytes(
           com.google.protobuf.ByteString value) {
         java.util.Objects.requireNonNull(value);
         checkByteStringIsUtf8(value);
-        fromUserId_ = value;
+        senderId_ = value;
         bitField0_ |= 0x00000001;
         onChanged();
         return this;
       }
 
-      private java.lang.Object toUserId_ = "";
+      private java.lang.Object receiverId_ = "";
       /**
        * <pre>
        * 被申请方ID（集群路由用）
        * </pre>
        *
-       * <code>string toUserId = 2;</code>
-       * @return The toUserId.
+       * <code>string receiverId = 2;</code>
+       * @return The receiverId.
        */
-      public java.lang.String getToUserId() {
-        java.lang.Object ref = toUserId_;
+      public java.lang.String getReceiverId() {
+        java.lang.Object ref = receiverId_;
         if (!(ref instanceof java.lang.String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          toUserId_ = s;
+          receiverId_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
@@ -12422,17 +12458,17 @@ java.lang.String defaultValue) {
        * 被申请方ID（集群路由用）
        * </pre>
        *
-       * <code>string toUserId = 2;</code>
-       * @return The bytes for toUserId.
+       * <code>string receiverId = 2;</code>
+       * @return The bytes for receiverId.
        */
       public com.google.protobuf.ByteString
-          getToUserIdBytes() {
-        java.lang.Object ref = toUserId_;
+          getReceiverIdBytes() {
+        java.lang.Object ref = receiverId_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
-          toUserId_ = b;
+          receiverId_ = b;
           return b;
         } else {
           return (com.google.protobuf.ByteString) ref;
@@ -12443,14 +12479,14 @@ java.lang.String defaultValue) {
        * 被申请方ID（集群路由用）
        * </pre>
        *
-       * <code>string toUserId = 2;</code>
-       * @param value The toUserId to set.
+       * <code>string receiverId = 2;</code>
+       * @param value The receiverId to set.
        * @return This builder for chaining.
        */
-      public Builder setToUserId(
+      public Builder setReceiverId(
           java.lang.String value) {
         java.util.Objects.requireNonNull(value);
-        toUserId_ = value;
+        receiverId_ = value;
         bitField0_ |= 0x00000002;
         onChanged();
         return this;
@@ -12460,11 +12496,11 @@ java.lang.String defaultValue) {
        * 被申请方ID（集群路由用）
        * </pre>
        *
-       * <code>string toUserId = 2;</code>
+       * <code>string receiverId = 2;</code>
        * @return This builder for chaining.
        */
-      public Builder clearToUserId() {
-        toUserId_ = getDefaultInstance().getToUserId();
+      public Builder clearReceiverId() {
+        receiverId_ = getDefaultInstance().getReceiverId();
         bitField0_ = (bitField0_ & ~0x00000002);
         onChanged();
         return this;
@@ -12474,15 +12510,15 @@ java.lang.String defaultValue) {
        * 被申请方ID（集群路由用）
        * </pre>
        *
-       * <code>string toUserId = 2;</code>
-       * @param value The bytes for toUserId to set.
+       * <code>string receiverId = 2;</code>
+       * @param value The bytes for receiverId to set.
        * @return This builder for chaining.
        */
-      public Builder setToUserIdBytes(
+      public Builder setReceiverIdBytes(
           com.google.protobuf.ByteString value) {
         java.util.Objects.requireNonNull(value);
         checkByteStringIsUtf8(value);
-        toUserId_ = value;
+        receiverId_ = value;
         bitField0_ |= 0x00000002;
         onChanged();
         return this;
@@ -12964,11 +13000,19 @@ java.lang.String defaultValue) {
       com.google.protobuf.MessageOrBuilder {
 
     /**
+     * <pre>
+     * 状态变更用户ID
+     * </pre>
+     *
      * <code>string userId = 1;</code>
      * @return The userId.
      */
     java.lang.String getUserId();
     /**
+     * <pre>
+     * 状态变更用户ID
+     * </pre>
+     *
      * <code>string userId = 1;</code>
      * @return The bytes for userId.
      */
@@ -12980,20 +13024,20 @@ java.lang.String defaultValue) {
      * 通知接收方ID（集群路由用）
      * </pre>
      *
-     * <code>string toUserId = 2;</code>
-     * @return The toUserId.
+     * <code>string receiverId = 2;</code>
+     * @return The receiverId.
      */
-    java.lang.String getToUserId();
+    java.lang.String getReceiverId();
     /**
      * <pre>
      * 通知接收方ID（集群路由用）
      * </pre>
      *
-     * <code>string toUserId = 2;</code>
-     * @return The bytes for toUserId.
+     * <code>string receiverId = 2;</code>
+     * @return The bytes for receiverId.
      */
     com.google.protobuf.ByteString
-        getToUserIdBytes();
+        getReceiverIdBytes();
 
     /**
      * <pre>
@@ -13032,7 +13076,7 @@ java.lang.String defaultValue) {
     }
     private FriendStatusNotify() {
       userId_ = "";
-      toUserId_ = "";
+      receiverId_ = "";
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -13057,6 +13101,10 @@ java.lang.String defaultValue) {
     @SuppressWarnings("serial")
     private volatile java.lang.Object userId_ = "";
     /**
+     * <pre>
+     * 状态变更用户ID
+     * </pre>
+     *
      * <code>string userId = 1;</code>
      * @return The userId.
      */
@@ -13074,6 +13122,10 @@ java.lang.String defaultValue) {
       }
     }
     /**
+     * <pre>
+     * 状态变更用户ID
+     * </pre>
+     *
      * <code>string userId = 1;</code>
      * @return The bytes for userId.
      */
@@ -13092,27 +13144,27 @@ java.lang.String defaultValue) {
       }
     }
 
-    public static final int TOUSERID_FIELD_NUMBER = 2;
+    public static final int RECEIVERID_FIELD_NUMBER = 2;
     @SuppressWarnings("serial")
-    private volatile java.lang.Object toUserId_ = "";
+    private volatile java.lang.Object receiverId_ = "";
     /**
      * <pre>
      * 通知接收方ID（集群路由用）
      * </pre>
      *
-     * <code>string toUserId = 2;</code>
-     * @return The toUserId.
+     * <code>string receiverId = 2;</code>
+     * @return The receiverId.
      */
     @java.lang.Override
-    public java.lang.String getToUserId() {
-      java.lang.Object ref = toUserId_;
+    public java.lang.String getReceiverId() {
+      java.lang.Object ref = receiverId_;
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        toUserId_ = s;
+        receiverId_ = s;
         return s;
       }
     }
@@ -13121,18 +13173,18 @@ java.lang.String defaultValue) {
      * 通知接收方ID（集群路由用）
      * </pre>
      *
-     * <code>string toUserId = 2;</code>
-     * @return The bytes for toUserId.
+     * <code>string receiverId = 2;</code>
+     * @return The bytes for receiverId.
      */
     @java.lang.Override
     public com.google.protobuf.ByteString
-        getToUserIdBytes() {
-      java.lang.Object ref = toUserId_;
+        getReceiverIdBytes() {
+      java.lang.Object ref = receiverId_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        toUserId_ = b;
+        receiverId_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
@@ -13171,8 +13223,8 @@ java.lang.String defaultValue) {
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(userId_)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 1, userId_);
       }
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(toUserId_)) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 2, toUserId_);
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(receiverId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, receiverId_);
       }
       if (status_ != 0) {
         output.writeInt32(3, status_);
@@ -13184,8 +13236,8 @@ java.lang.String defaultValue) {
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(userId_)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(1, userId_);
       }
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(toUserId_)) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, toUserId_);
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(receiverId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, receiverId_);
       }
       if (status_ != 0) {
         size += com.google.protobuf.CodedOutputStream
@@ -13217,8 +13269,8 @@ java.lang.String defaultValue) {
 
       if (!getUserId()
           .equals(other.getUserId())) return false;
-      if (!getToUserId()
-          .equals(other.getToUserId())) return false;
+      if (!getReceiverId()
+          .equals(other.getReceiverId())) return false;
       if (getStatus()
           != other.getStatus()) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
@@ -13234,8 +13286,8 @@ java.lang.String defaultValue) {
       hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + USERID_FIELD_NUMBER;
       hash = (53 * hash) + getUserId().hashCode();
-      hash = (37 * hash) + TOUSERID_FIELD_NUMBER;
-      hash = (53 * hash) + getToUserId().hashCode();
+      hash = (37 * hash) + RECEIVERID_FIELD_NUMBER;
+      hash = (53 * hash) + getReceiverId().hashCode();
       hash = (37 * hash) + STATUS_FIELD_NUMBER;
       hash = (53 * hash) + getStatus();
       hash = (29 * hash) + getUnknownFields().hashCode();
@@ -13374,7 +13426,7 @@ java.lang.String defaultValue) {
         super.clear();
         bitField0_ = 0;
         userId_ = "";
-        toUserId_ = "";
+        receiverId_ = "";
         status_ = 0;
         return this;
       }
@@ -13413,7 +13465,7 @@ java.lang.String defaultValue) {
           result.userId_ = userId_;
         }
         if (((from_bitField0_ & 0x00000002) != 0)) {
-          result.toUserId_ = toUserId_;
+          result.receiverId_ = receiverId_;
         }
         if (((from_bitField0_ & 0x00000004) != 0)) {
           result.status_ = status_;
@@ -13437,8 +13489,8 @@ java.lang.String defaultValue) {
           bitField0_ |= 0x00000001;
           onChanged();
         }
-        if (!other.getToUserId().isEmpty()) {
-          toUserId_ = other.toUserId_;
+        if (!other.getReceiverId().isEmpty()) {
+          receiverId_ = other.receiverId_;
           bitField0_ |= 0x00000002;
           onChanged();
         }
@@ -13475,7 +13527,7 @@ java.lang.String defaultValue) {
                 break;
               } // case 10
               case 18: {
-                toUserId_ = input.readStringRequireUtf8();
+                receiverId_ = input.readStringRequireUtf8();
                 bitField0_ |= 0x00000002;
                 break;
               } // case 18
@@ -13503,6 +13555,10 @@ java.lang.String defaultValue) {
 
       private java.lang.Object userId_ = "";
       /**
+       * <pre>
+       * 状态变更用户ID
+       * </pre>
+       *
        * <code>string userId = 1;</code>
        * @return The userId.
        */
@@ -13519,6 +13575,10 @@ java.lang.String defaultValue) {
         }
       }
       /**
+       * <pre>
+       * 状态变更用户ID
+       * </pre>
+       *
        * <code>string userId = 1;</code>
        * @return The bytes for userId.
        */
@@ -13536,6 +13596,10 @@ java.lang.String defaultValue) {
         }
       }
       /**
+       * <pre>
+       * 状态变更用户ID
+       * </pre>
+       *
        * <code>string userId = 1;</code>
        * @param value The userId to set.
        * @return This builder for chaining.
@@ -13549,6 +13613,10 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * 状态变更用户ID
+       * </pre>
+       *
        * <code>string userId = 1;</code>
        * @return This builder for chaining.
        */
@@ -13559,6 +13627,10 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * 状态变更用户ID
+       * </pre>
+       *
        * <code>string userId = 1;</code>
        * @param value The bytes for userId to set.
        * @return This builder for chaining.
@@ -13573,22 +13645,22 @@ java.lang.String defaultValue) {
         return this;
       }
 
-      private java.lang.Object toUserId_ = "";
+      private java.lang.Object receiverId_ = "";
       /**
        * <pre>
        * 通知接收方ID（集群路由用）
        * </pre>
        *
-       * <code>string toUserId = 2;</code>
-       * @return The toUserId.
+       * <code>string receiverId = 2;</code>
+       * @return The receiverId.
        */
-      public java.lang.String getToUserId() {
-        java.lang.Object ref = toUserId_;
+      public java.lang.String getReceiverId() {
+        java.lang.Object ref = receiverId_;
         if (!(ref instanceof java.lang.String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          toUserId_ = s;
+          receiverId_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
@@ -13599,17 +13671,17 @@ java.lang.String defaultValue) {
        * 通知接收方ID（集群路由用）
        * </pre>
        *
-       * <code>string toUserId = 2;</code>
-       * @return The bytes for toUserId.
+       * <code>string receiverId = 2;</code>
+       * @return The bytes for receiverId.
        */
       public com.google.protobuf.ByteString
-          getToUserIdBytes() {
-        java.lang.Object ref = toUserId_;
+          getReceiverIdBytes() {
+        java.lang.Object ref = receiverId_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
-          toUserId_ = b;
+          receiverId_ = b;
           return b;
         } else {
           return (com.google.protobuf.ByteString) ref;
@@ -13620,14 +13692,14 @@ java.lang.String defaultValue) {
        * 通知接收方ID（集群路由用）
        * </pre>
        *
-       * <code>string toUserId = 2;</code>
-       * @param value The toUserId to set.
+       * <code>string receiverId = 2;</code>
+       * @param value The receiverId to set.
        * @return This builder for chaining.
        */
-      public Builder setToUserId(
+      public Builder setReceiverId(
           java.lang.String value) {
         java.util.Objects.requireNonNull(value);
-        toUserId_ = value;
+        receiverId_ = value;
         bitField0_ |= 0x00000002;
         onChanged();
         return this;
@@ -13637,11 +13709,11 @@ java.lang.String defaultValue) {
        * 通知接收方ID（集群路由用）
        * </pre>
        *
-       * <code>string toUserId = 2;</code>
+       * <code>string receiverId = 2;</code>
        * @return This builder for chaining.
        */
-      public Builder clearToUserId() {
-        toUserId_ = getDefaultInstance().getToUserId();
+      public Builder clearReceiverId() {
+        receiverId_ = getDefaultInstance().getReceiverId();
         bitField0_ = (bitField0_ & ~0x00000002);
         onChanged();
         return this;
@@ -13651,15 +13723,15 @@ java.lang.String defaultValue) {
        * 通知接收方ID（集群路由用）
        * </pre>
        *
-       * <code>string toUserId = 2;</code>
-       * @param value The bytes for toUserId to set.
+       * <code>string receiverId = 2;</code>
+       * @param value The bytes for receiverId to set.
        * @return This builder for chaining.
        */
-      public Builder setToUserIdBytes(
+      public Builder setReceiverIdBytes(
           com.google.protobuf.ByteString value) {
         java.util.Objects.requireNonNull(value);
         checkByteStringIsUtf8(value);
-        toUserId_ = value;
+        receiverId_ = value;
         bitField0_ |= 0x00000002;
         onChanged();
         return this;
@@ -17026,28 +17098,44 @@ java.lang.String defaultValue) {
     int getSignalType();
 
     /**
-     * <code>string fromUserId = 2;</code>
-     * @return The fromUserId.
+     * <pre>
+     * 发送者ID
+     * </pre>
+     *
+     * <code>string senderId = 2;</code>
+     * @return The senderId.
      */
-    java.lang.String getFromUserId();
+    java.lang.String getSenderId();
     /**
-     * <code>string fromUserId = 2;</code>
-     * @return The bytes for fromUserId.
+     * <pre>
+     * 发送者ID
+     * </pre>
+     *
+     * <code>string senderId = 2;</code>
+     * @return The bytes for senderId.
      */
     com.google.protobuf.ByteString
-        getFromUserIdBytes();
+        getSenderIdBytes();
 
     /**
-     * <code>string toUserId = 3;</code>
-     * @return The toUserId.
+     * <pre>
+     * 接收者ID
+     * </pre>
+     *
+     * <code>string receiverId = 3;</code>
+     * @return The receiverId.
      */
-    java.lang.String getToUserId();
+    java.lang.String getReceiverId();
     /**
-     * <code>string toUserId = 3;</code>
-     * @return The bytes for toUserId.
+     * <pre>
+     * 接收者ID
+     * </pre>
+     *
+     * <code>string receiverId = 3;</code>
+     * @return The bytes for receiverId.
      */
     com.google.protobuf.ByteString
-        getToUserIdBytes();
+        getReceiverIdBytes();
 
     /**
      * <pre>
@@ -17115,8 +17203,8 @@ java.lang.String defaultValue) {
       super(builder);
     }
     private RtcSignal() {
-      fromUserId_ = "";
-      toUserId_ = "";
+      senderId_ = "";
+      receiverId_ = "";
       payload_ = "";
       callId_ = "";
     }
@@ -17154,78 +17242,94 @@ java.lang.String defaultValue) {
       return signalType_;
     }
 
-    public static final int FROMUSERID_FIELD_NUMBER = 2;
+    public static final int SENDERID_FIELD_NUMBER = 2;
     @SuppressWarnings("serial")
-    private volatile java.lang.Object fromUserId_ = "";
+    private volatile java.lang.Object senderId_ = "";
     /**
-     * <code>string fromUserId = 2;</code>
-     * @return The fromUserId.
+     * <pre>
+     * 发送者ID
+     * </pre>
+     *
+     * <code>string senderId = 2;</code>
+     * @return The senderId.
      */
     @java.lang.Override
-    public java.lang.String getFromUserId() {
-      java.lang.Object ref = fromUserId_;
+    public java.lang.String getSenderId() {
+      java.lang.Object ref = senderId_;
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        fromUserId_ = s;
+        senderId_ = s;
         return s;
       }
     }
     /**
-     * <code>string fromUserId = 2;</code>
-     * @return The bytes for fromUserId.
+     * <pre>
+     * 发送者ID
+     * </pre>
+     *
+     * <code>string senderId = 2;</code>
+     * @return The bytes for senderId.
      */
     @java.lang.Override
     public com.google.protobuf.ByteString
-        getFromUserIdBytes() {
-      java.lang.Object ref = fromUserId_;
+        getSenderIdBytes() {
+      java.lang.Object ref = senderId_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        fromUserId_ = b;
+        senderId_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
 
-    public static final int TOUSERID_FIELD_NUMBER = 3;
+    public static final int RECEIVERID_FIELD_NUMBER = 3;
     @SuppressWarnings("serial")
-    private volatile java.lang.Object toUserId_ = "";
+    private volatile java.lang.Object receiverId_ = "";
     /**
-     * <code>string toUserId = 3;</code>
-     * @return The toUserId.
+     * <pre>
+     * 接收者ID
+     * </pre>
+     *
+     * <code>string receiverId = 3;</code>
+     * @return The receiverId.
      */
     @java.lang.Override
-    public java.lang.String getToUserId() {
-      java.lang.Object ref = toUserId_;
+    public java.lang.String getReceiverId() {
+      java.lang.Object ref = receiverId_;
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        toUserId_ = s;
+        receiverId_ = s;
         return s;
       }
     }
     /**
-     * <code>string toUserId = 3;</code>
-     * @return The bytes for toUserId.
+     * <pre>
+     * 接收者ID
+     * </pre>
+     *
+     * <code>string receiverId = 3;</code>
+     * @return The bytes for receiverId.
      */
     @java.lang.Override
     public com.google.protobuf.ByteString
-        getToUserIdBytes() {
-      java.lang.Object ref = toUserId_;
+        getReceiverIdBytes() {
+      java.lang.Object ref = receiverId_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        toUserId_ = b;
+        receiverId_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
@@ -17343,11 +17447,11 @@ java.lang.String defaultValue) {
       if (signalType_ != 0) {
         output.writeInt32(1, signalType_);
       }
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(fromUserId_)) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 2, fromUserId_);
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(senderId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, senderId_);
       }
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(toUserId_)) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 3, toUserId_);
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(receiverId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 3, receiverId_);
       }
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(payload_)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 4, payload_);
@@ -17363,11 +17467,11 @@ java.lang.String defaultValue) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(1, signalType_);
       }
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(fromUserId_)) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, fromUserId_);
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(senderId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, senderId_);
       }
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(toUserId_)) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(3, toUserId_);
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(receiverId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(3, receiverId_);
       }
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(payload_)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(4, payload_);
@@ -17401,10 +17505,10 @@ java.lang.String defaultValue) {
 
       if (getSignalType()
           != other.getSignalType()) return false;
-      if (!getFromUserId()
-          .equals(other.getFromUserId())) return false;
-      if (!getToUserId()
-          .equals(other.getToUserId())) return false;
+      if (!getSenderId()
+          .equals(other.getSenderId())) return false;
+      if (!getReceiverId()
+          .equals(other.getReceiverId())) return false;
       if (!getPayload()
           .equals(other.getPayload())) return false;
       if (!getCallId()
@@ -17422,10 +17526,10 @@ java.lang.String defaultValue) {
       hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + SIGNALTYPE_FIELD_NUMBER;
       hash = (53 * hash) + getSignalType();
-      hash = (37 * hash) + FROMUSERID_FIELD_NUMBER;
-      hash = (53 * hash) + getFromUserId().hashCode();
-      hash = (37 * hash) + TOUSERID_FIELD_NUMBER;
-      hash = (53 * hash) + getToUserId().hashCode();
+      hash = (37 * hash) + SENDERID_FIELD_NUMBER;
+      hash = (53 * hash) + getSenderId().hashCode();
+      hash = (37 * hash) + RECEIVERID_FIELD_NUMBER;
+      hash = (53 * hash) + getReceiverId().hashCode();
       hash = (37 * hash) + PAYLOAD_FIELD_NUMBER;
       hash = (53 * hash) + getPayload().hashCode();
       hash = (37 * hash) + CALLID_FIELD_NUMBER;
@@ -17566,8 +17670,8 @@ java.lang.String defaultValue) {
         super.clear();
         bitField0_ = 0;
         signalType_ = 0;
-        fromUserId_ = "";
-        toUserId_ = "";
+        senderId_ = "";
+        receiverId_ = "";
         payload_ = "";
         callId_ = "";
         return this;
@@ -17607,10 +17711,10 @@ java.lang.String defaultValue) {
           result.signalType_ = signalType_;
         }
         if (((from_bitField0_ & 0x00000002) != 0)) {
-          result.fromUserId_ = fromUserId_;
+          result.senderId_ = senderId_;
         }
         if (((from_bitField0_ & 0x00000004) != 0)) {
-          result.toUserId_ = toUserId_;
+          result.receiverId_ = receiverId_;
         }
         if (((from_bitField0_ & 0x00000008) != 0)) {
           result.payload_ = payload_;
@@ -17635,13 +17739,13 @@ java.lang.String defaultValue) {
         if (other.getSignalType() != 0) {
           setSignalType(other.getSignalType());
         }
-        if (!other.getFromUserId().isEmpty()) {
-          fromUserId_ = other.fromUserId_;
+        if (!other.getSenderId().isEmpty()) {
+          senderId_ = other.senderId_;
           bitField0_ |= 0x00000002;
           onChanged();
         }
-        if (!other.getToUserId().isEmpty()) {
-          toUserId_ = other.toUserId_;
+        if (!other.getReceiverId().isEmpty()) {
+          receiverId_ = other.receiverId_;
           bitField0_ |= 0x00000004;
           onChanged();
         }
@@ -17685,12 +17789,12 @@ java.lang.String defaultValue) {
                 break;
               } // case 8
               case 18: {
-                fromUserId_ = input.readStringRequireUtf8();
+                senderId_ = input.readStringRequireUtf8();
                 bitField0_ |= 0x00000002;
                 break;
               } // case 18
               case 26: {
-                toUserId_ = input.readStringRequireUtf8();
+                receiverId_ = input.readStringRequireUtf8();
                 bitField0_ |= 0x00000004;
                 break;
               } // case 26
@@ -17765,145 +17869,185 @@ java.lang.String defaultValue) {
         return this;
       }
 
-      private java.lang.Object fromUserId_ = "";
+      private java.lang.Object senderId_ = "";
       /**
-       * <code>string fromUserId = 2;</code>
-       * @return The fromUserId.
+       * <pre>
+       * 发送者ID
+       * </pre>
+       *
+       * <code>string senderId = 2;</code>
+       * @return The senderId.
        */
-      public java.lang.String getFromUserId() {
-        java.lang.Object ref = fromUserId_;
+      public java.lang.String getSenderId() {
+        java.lang.Object ref = senderId_;
         if (!(ref instanceof java.lang.String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          fromUserId_ = s;
+          senderId_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
         }
       }
       /**
-       * <code>string fromUserId = 2;</code>
-       * @return The bytes for fromUserId.
+       * <pre>
+       * 发送者ID
+       * </pre>
+       *
+       * <code>string senderId = 2;</code>
+       * @return The bytes for senderId.
        */
       public com.google.protobuf.ByteString
-          getFromUserIdBytes() {
-        java.lang.Object ref = fromUserId_;
+          getSenderIdBytes() {
+        java.lang.Object ref = senderId_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
-          fromUserId_ = b;
+          senderId_ = b;
           return b;
         } else {
           return (com.google.protobuf.ByteString) ref;
         }
       }
       /**
-       * <code>string fromUserId = 2;</code>
-       * @param value The fromUserId to set.
+       * <pre>
+       * 发送者ID
+       * </pre>
+       *
+       * <code>string senderId = 2;</code>
+       * @param value The senderId to set.
        * @return This builder for chaining.
        */
-      public Builder setFromUserId(
+      public Builder setSenderId(
           java.lang.String value) {
         java.util.Objects.requireNonNull(value);
-        fromUserId_ = value;
+        senderId_ = value;
         bitField0_ |= 0x00000002;
         onChanged();
         return this;
       }
       /**
-       * <code>string fromUserId = 2;</code>
+       * <pre>
+       * 发送者ID
+       * </pre>
+       *
+       * <code>string senderId = 2;</code>
        * @return This builder for chaining.
        */
-      public Builder clearFromUserId() {
-        fromUserId_ = getDefaultInstance().getFromUserId();
+      public Builder clearSenderId() {
+        senderId_ = getDefaultInstance().getSenderId();
         bitField0_ = (bitField0_ & ~0x00000002);
         onChanged();
         return this;
       }
       /**
-       * <code>string fromUserId = 2;</code>
-       * @param value The bytes for fromUserId to set.
+       * <pre>
+       * 发送者ID
+       * </pre>
+       *
+       * <code>string senderId = 2;</code>
+       * @param value The bytes for senderId to set.
        * @return This builder for chaining.
        */
-      public Builder setFromUserIdBytes(
+      public Builder setSenderIdBytes(
           com.google.protobuf.ByteString value) {
         java.util.Objects.requireNonNull(value);
         checkByteStringIsUtf8(value);
-        fromUserId_ = value;
+        senderId_ = value;
         bitField0_ |= 0x00000002;
         onChanged();
         return this;
       }
 
-      private java.lang.Object toUserId_ = "";
+      private java.lang.Object receiverId_ = "";
       /**
-       * <code>string toUserId = 3;</code>
-       * @return The toUserId.
+       * <pre>
+       * 接收者ID
+       * </pre>
+       *
+       * <code>string receiverId = 3;</code>
+       * @return The receiverId.
        */
-      public java.lang.String getToUserId() {
-        java.lang.Object ref = toUserId_;
+      public java.lang.String getReceiverId() {
+        java.lang.Object ref = receiverId_;
         if (!(ref instanceof java.lang.String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          toUserId_ = s;
+          receiverId_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
         }
       }
       /**
-       * <code>string toUserId = 3;</code>
-       * @return The bytes for toUserId.
+       * <pre>
+       * 接收者ID
+       * </pre>
+       *
+       * <code>string receiverId = 3;</code>
+       * @return The bytes for receiverId.
        */
       public com.google.protobuf.ByteString
-          getToUserIdBytes() {
-        java.lang.Object ref = toUserId_;
+          getReceiverIdBytes() {
+        java.lang.Object ref = receiverId_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
-          toUserId_ = b;
+          receiverId_ = b;
           return b;
         } else {
           return (com.google.protobuf.ByteString) ref;
         }
       }
       /**
-       * <code>string toUserId = 3;</code>
-       * @param value The toUserId to set.
+       * <pre>
+       * 接收者ID
+       * </pre>
+       *
+       * <code>string receiverId = 3;</code>
+       * @param value The receiverId to set.
        * @return This builder for chaining.
        */
-      public Builder setToUserId(
+      public Builder setReceiverId(
           java.lang.String value) {
         java.util.Objects.requireNonNull(value);
-        toUserId_ = value;
+        receiverId_ = value;
         bitField0_ |= 0x00000004;
         onChanged();
         return this;
       }
       /**
-       * <code>string toUserId = 3;</code>
+       * <pre>
+       * 接收者ID
+       * </pre>
+       *
+       * <code>string receiverId = 3;</code>
        * @return This builder for chaining.
        */
-      public Builder clearToUserId() {
-        toUserId_ = getDefaultInstance().getToUserId();
+      public Builder clearReceiverId() {
+        receiverId_ = getDefaultInstance().getReceiverId();
         bitField0_ = (bitField0_ & ~0x00000004);
         onChanged();
         return this;
       }
       /**
-       * <code>string toUserId = 3;</code>
-       * @param value The bytes for toUserId to set.
+       * <pre>
+       * 接收者ID
+       * </pre>
+       *
+       * <code>string receiverId = 3;</code>
+       * @param value The bytes for receiverId to set.
        * @return This builder for chaining.
        */
-      public Builder setToUserIdBytes(
+      public Builder setReceiverIdBytes(
           com.google.protobuf.ByteString value) {
         java.util.Objects.requireNonNull(value);
         checkByteStringIsUtf8(value);
-        toUserId_ = value;
+        receiverId_ = value;
         bitField0_ |= 0x00000004;
         onChanged();
         return this;
@@ -18159,16 +18303,24 @@ java.lang.String defaultValue) {
     int getSignalType();
 
     /**
-     * <code>string fromUserId = 2;</code>
-     * @return The fromUserId.
+     * <pre>
+     * 发送者ID
+     * </pre>
+     *
+     * <code>string senderId = 2;</code>
+     * @return The senderId.
      */
-    java.lang.String getFromUserId();
+    java.lang.String getSenderId();
     /**
-     * <code>string fromUserId = 2;</code>
-     * @return The bytes for fromUserId.
+     * <pre>
+     * 发送者ID
+     * </pre>
+     *
+     * <code>string senderId = 2;</code>
+     * @return The bytes for senderId.
      */
     com.google.protobuf.ByteString
-        getFromUserIdBytes();
+        getSenderIdBytes();
 
     /**
      * <pre>
@@ -18256,7 +18408,7 @@ java.lang.String defaultValue) {
       super(builder);
     }
     private RtcGroup() {
-      fromUserId_ = "";
+      senderId_ = "";
       groupId_ = "";
       payload_ = "";
       callId_ = "";
@@ -18295,39 +18447,47 @@ java.lang.String defaultValue) {
       return signalType_;
     }
 
-    public static final int FROMUSERID_FIELD_NUMBER = 2;
+    public static final int SENDERID_FIELD_NUMBER = 2;
     @SuppressWarnings("serial")
-    private volatile java.lang.Object fromUserId_ = "";
+    private volatile java.lang.Object senderId_ = "";
     /**
-     * <code>string fromUserId = 2;</code>
-     * @return The fromUserId.
+     * <pre>
+     * 发送者ID
+     * </pre>
+     *
+     * <code>string senderId = 2;</code>
+     * @return The senderId.
      */
     @java.lang.Override
-    public java.lang.String getFromUserId() {
-      java.lang.Object ref = fromUserId_;
+    public java.lang.String getSenderId() {
+      java.lang.Object ref = senderId_;
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        fromUserId_ = s;
+        senderId_ = s;
         return s;
       }
     }
     /**
-     * <code>string fromUserId = 2;</code>
-     * @return The bytes for fromUserId.
+     * <pre>
+     * 发送者ID
+     * </pre>
+     *
+     * <code>string senderId = 2;</code>
+     * @return The bytes for senderId.
      */
     @java.lang.Override
     public com.google.protobuf.ByteString
-        getFromUserIdBytes() {
-      java.lang.Object ref = fromUserId_;
+        getSenderIdBytes() {
+      java.lang.Object ref = senderId_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        fromUserId_ = b;
+        senderId_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
@@ -18492,8 +18652,8 @@ java.lang.String defaultValue) {
       if (signalType_ != 0) {
         output.writeInt32(1, signalType_);
       }
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(fromUserId_)) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 2, fromUserId_);
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(senderId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, senderId_);
       }
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(groupId_)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 3, groupId_);
@@ -18512,8 +18672,8 @@ java.lang.String defaultValue) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(1, signalType_);
       }
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(fromUserId_)) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, fromUserId_);
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(senderId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, senderId_);
       }
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(groupId_)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(3, groupId_);
@@ -18550,8 +18710,8 @@ java.lang.String defaultValue) {
 
       if (getSignalType()
           != other.getSignalType()) return false;
-      if (!getFromUserId()
-          .equals(other.getFromUserId())) return false;
+      if (!getSenderId()
+          .equals(other.getSenderId())) return false;
       if (!getGroupId()
           .equals(other.getGroupId())) return false;
       if (!getPayload()
@@ -18571,8 +18731,8 @@ java.lang.String defaultValue) {
       hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + SIGNALTYPE_FIELD_NUMBER;
       hash = (53 * hash) + getSignalType();
-      hash = (37 * hash) + FROMUSERID_FIELD_NUMBER;
-      hash = (53 * hash) + getFromUserId().hashCode();
+      hash = (37 * hash) + SENDERID_FIELD_NUMBER;
+      hash = (53 * hash) + getSenderId().hashCode();
       hash = (37 * hash) + GROUPID_FIELD_NUMBER;
       hash = (53 * hash) + getGroupId().hashCode();
       hash = (37 * hash) + PAYLOAD_FIELD_NUMBER;
@@ -18715,7 +18875,7 @@ java.lang.String defaultValue) {
         super.clear();
         bitField0_ = 0;
         signalType_ = 0;
-        fromUserId_ = "";
+        senderId_ = "";
         groupId_ = "";
         payload_ = "";
         callId_ = "";
@@ -18756,7 +18916,7 @@ java.lang.String defaultValue) {
           result.signalType_ = signalType_;
         }
         if (((from_bitField0_ & 0x00000002) != 0)) {
-          result.fromUserId_ = fromUserId_;
+          result.senderId_ = senderId_;
         }
         if (((from_bitField0_ & 0x00000004) != 0)) {
           result.groupId_ = groupId_;
@@ -18784,8 +18944,8 @@ java.lang.String defaultValue) {
         if (other.getSignalType() != 0) {
           setSignalType(other.getSignalType());
         }
-        if (!other.getFromUserId().isEmpty()) {
-          fromUserId_ = other.fromUserId_;
+        if (!other.getSenderId().isEmpty()) {
+          senderId_ = other.senderId_;
           bitField0_ |= 0x00000002;
           onChanged();
         }
@@ -18834,7 +18994,7 @@ java.lang.String defaultValue) {
                 break;
               } // case 8
               case 18: {
-                fromUserId_ = input.readStringRequireUtf8();
+                senderId_ = input.readStringRequireUtf8();
                 bitField0_ |= 0x00000002;
                 break;
               } // case 18
@@ -18914,73 +19074,93 @@ java.lang.String defaultValue) {
         return this;
       }
 
-      private java.lang.Object fromUserId_ = "";
+      private java.lang.Object senderId_ = "";
       /**
-       * <code>string fromUserId = 2;</code>
-       * @return The fromUserId.
+       * <pre>
+       * 发送者ID
+       * </pre>
+       *
+       * <code>string senderId = 2;</code>
+       * @return The senderId.
        */
-      public java.lang.String getFromUserId() {
-        java.lang.Object ref = fromUserId_;
+      public java.lang.String getSenderId() {
+        java.lang.Object ref = senderId_;
         if (!(ref instanceof java.lang.String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          fromUserId_ = s;
+          senderId_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
         }
       }
       /**
-       * <code>string fromUserId = 2;</code>
-       * @return The bytes for fromUserId.
+       * <pre>
+       * 发送者ID
+       * </pre>
+       *
+       * <code>string senderId = 2;</code>
+       * @return The bytes for senderId.
        */
       public com.google.protobuf.ByteString
-          getFromUserIdBytes() {
-        java.lang.Object ref = fromUserId_;
+          getSenderIdBytes() {
+        java.lang.Object ref = senderId_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
-          fromUserId_ = b;
+          senderId_ = b;
           return b;
         } else {
           return (com.google.protobuf.ByteString) ref;
         }
       }
       /**
-       * <code>string fromUserId = 2;</code>
-       * @param value The fromUserId to set.
+       * <pre>
+       * 发送者ID
+       * </pre>
+       *
+       * <code>string senderId = 2;</code>
+       * @param value The senderId to set.
        * @return This builder for chaining.
        */
-      public Builder setFromUserId(
+      public Builder setSenderId(
           java.lang.String value) {
         java.util.Objects.requireNonNull(value);
-        fromUserId_ = value;
+        senderId_ = value;
         bitField0_ |= 0x00000002;
         onChanged();
         return this;
       }
       /**
-       * <code>string fromUserId = 2;</code>
+       * <pre>
+       * 发送者ID
+       * </pre>
+       *
+       * <code>string senderId = 2;</code>
        * @return This builder for chaining.
        */
-      public Builder clearFromUserId() {
-        fromUserId_ = getDefaultInstance().getFromUserId();
+      public Builder clearSenderId() {
+        senderId_ = getDefaultInstance().getSenderId();
         bitField0_ = (bitField0_ & ~0x00000002);
         onChanged();
         return this;
       }
       /**
-       * <code>string fromUserId = 2;</code>
-       * @param value The bytes for fromUserId to set.
+       * <pre>
+       * 发送者ID
+       * </pre>
+       *
+       * <code>string senderId = 2;</code>
+       * @param value The bytes for senderId to set.
        * @return This builder for chaining.
        */
-      public Builder setFromUserIdBytes(
+      public Builder setSenderIdBytes(
           com.google.protobuf.ByteString value) {
         java.util.Objects.requireNonNull(value);
         checkByteStringIsUtf8(value);
-        fromUserId_ = value;
+        senderId_ = value;
         bitField0_ |= 0x00000002;
         onChanged();
         return this;
@@ -19444,21 +19624,21 @@ java.lang.String defaultValue) {
       "age.ExtEntry\032*\n\010ExtEntry\022\013\n\003key\030\001 \001(\t\022\r\n" +
       "\005value\030\002 \001(\t:\0028\001\"[\n\tServerAck\022\027\n\017clientR" +
       "equestId\030\001 \001(\t\022\023\n\013serverMsgId\030\002 \001(\t\022\014\n\004c" +
-      "ode\030\003 \001(\005\022\022\n\nserverTime\030\004 \001(\003\"0\n\013Deliver" +
-      "yAck\022\r\n\005msgId\030\001 \001(\t\022\022\n\nfromUserId\030\002 \001(\t\"" +
-      "<\n\013ReadReceipt\022\026\n\016conversationId\030\001 \001(\t\022\025" +
-      "\n\rlastReadMsgId\030\002 \001(\t\"K\n\020MsgRecallReques" +
-      "t\022\r\n\005msgId\030\001 \001(\t\022\026\n\016conversationId\030\002 \001(\t" +
-      "\022\020\n\010chatType\030\003 \001(\005\"^\n\017MsgRecallNotify\022\r\n" +
-      "\005msgId\030\001 \001(\t\022\026\n\016conversationId\030\002 \001(\t\022\022\n\n" +
-      "operatorId\030\003 \001(\t\022\020\n\010chatType\030\004 \001(\005\"D\n\022On" +
-      "lineStatusNotify\022\016\n\006userId\030\001 \001(\t\022\016\n\006stat" +
-      "us\030\002 \001(\005\022\016\n\006device\030\003 \001(\t\"\220\001\n\023FriendReque" +
-      "stNotify\022\022\n\nfromUserId\030\001 \001(\t\022\020\n\010toUserId" +
-      "\030\002 \001(\t\022\020\n\010nickname\030\003 \001(\t\022\016\n\006avatar\030\004 \001(\t" +
-      "\022\017\n\007message\030\005 \001(\t\022\021\n\trequestId\030\006 \001(\t\022\r\n\005" +
-      "logId\030\007 \001(\t\"F\n\022FriendStatusNotify\022\016\n\006use" +
-      "rId\030\001 \001(\t\022\020\n\010toUserId\030\002 \001(\t\022\016\n\006status\030\003 " +
+      "ode\030\003 \001(\005\022\022\n\nserverTime\030\004 \001(\003\".\n\013Deliver" +
+      "yAck\022\r\n\005msgId\030\001 \001(\t\022\020\n\010senderId\030\002 \001(\t\"<\n" +
+      "\013ReadReceipt\022\026\n\016conversationId\030\001 \001(\t\022\025\n\r" +
+      "lastReadMsgId\030\002 \001(\t\"K\n\020MsgRecallRequest\022" +
+      "\r\n\005msgId\030\001 \001(\t\022\026\n\016conversationId\030\002 \001(\t\022\020" +
+      "\n\010chatType\030\003 \001(\005\"^\n\017MsgRecallNotify\022\r\n\005m" +
+      "sgId\030\001 \001(\t\022\026\n\016conversationId\030\002 \001(\t\022\022\n\nop" +
+      "eratorId\030\003 \001(\t\022\020\n\010chatType\030\004 \001(\005\"D\n\022Onli" +
+      "neStatusNotify\022\016\n\006userId\030\001 \001(\t\022\016\n\006status" +
+      "\030\002 \001(\005\022\016\n\006device\030\003 \001(\t\"\220\001\n\023FriendRequest" +
+      "Notify\022\020\n\010senderId\030\001 \001(\t\022\022\n\nreceiverId\030\002" +
+      " \001(\t\022\020\n\010nickname\030\003 \001(\t\022\016\n\006avatar\030\004 \001(\t\022\017" +
+      "\n\007message\030\005 \001(\t\022\021\n\trequestId\030\006 \001(\t\022\r\n\005lo" +
+      "gId\030\007 \001(\t\"H\n\022FriendStatusNotify\022\016\n\006userI" +
+      "d\030\001 \001(\t\022\022\n\nreceiverId\030\002 \001(\t\022\016\n\006status\030\003 " +
       "\001(\005\"X\n\021GroupMemberNotify\022\017\n\007groupId\030\001 \001(" +
       "\t\022\016\n\006action\030\002 \001(\005\022\016\n\006userId\030\003 \001(\t\022\022\n\nope" +
       "ratorId\030\004 \001(\t\"i\n\013GroupNotify\022\017\n\007groupId\030" +
@@ -19467,13 +19647,13 @@ java.lang.String defaultValue) {
       "\"n\n\026GroupJoinRequestNotify\022\017\n\007groupId\030\001 " +
       "\001(\t\022\016\n\006userId\030\002 \001(\t\022\022\n\noperatorId\030\003 \001(\t\022" +
       "\016\n\006status\030\004 \001(\005\022\017\n\007message\030\005 \001(\t\"f\n\tRtcS" +
-      "ignal\022\022\n\nsignalType\030\001 \001(\005\022\022\n\nfromUserId\030" +
-      "\002 \001(\t\022\020\n\010toUserId\030\003 \001(\t\022\017\n\007payload\030\004 \001(\t" +
-      "\022\016\n\006callId\030\005 \001(\t\"d\n\010RtcGroup\022\022\n\nsignalTy" +
-      "pe\030\001 \001(\005\022\022\n\nfromUserId\030\002 \001(\t\022\017\n\007groupId\030" +
-      "\003 \001(\t\022\017\n\007payload\030\004 \001(\t\022\016\n\006callId\030\005 \001(\tB)" +
-      "\n\034io.getbit.gim.protocol.codecB\007ImProtoP" +
-      "\000b\006proto3"
+      "ignal\022\022\n\nsignalType\030\001 \001(\005\022\020\n\010senderId\030\002 " +
+      "\001(\t\022\022\n\nreceiverId\030\003 \001(\t\022\017\n\007payload\030\004 \001(\t" +
+      "\022\016\n\006callId\030\005 \001(\t\"b\n\010RtcGroup\022\022\n\nsignalTy" +
+      "pe\030\001 \001(\005\022\020\n\010senderId\030\002 \001(\t\022\017\n\007groupId\030\003 " +
+      "\001(\t\022\017\n\007payload\030\004 \001(\t\022\016\n\006callId\030\005 \001(\tB)\n\034" +
+      "io.getbit.gim.protocol.codecB\007ImProtoP\000b" +
+      "\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -19538,7 +19718,7 @@ java.lang.String defaultValue) {
     internal_static_gim_im_DeliveryAck_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gim_im_DeliveryAck_descriptor,
-        new java.lang.String[] { "MsgId", "FromUserId", });
+        new java.lang.String[] { "MsgId", "SenderId", });
     internal_static_gim_im_ReadReceipt_descriptor =
       getDescriptor().getMessageType(9);
     internal_static_gim_im_ReadReceipt_fieldAccessorTable = new
@@ -19568,13 +19748,13 @@ java.lang.String defaultValue) {
     internal_static_gim_im_FriendRequestNotify_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gim_im_FriendRequestNotify_descriptor,
-        new java.lang.String[] { "FromUserId", "ToUserId", "Nickname", "Avatar", "Message", "RequestId", "LogId", });
+        new java.lang.String[] { "SenderId", "ReceiverId", "Nickname", "Avatar", "Message", "RequestId", "LogId", });
     internal_static_gim_im_FriendStatusNotify_descriptor =
       getDescriptor().getMessageType(14);
     internal_static_gim_im_FriendStatusNotify_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gim_im_FriendStatusNotify_descriptor,
-        new java.lang.String[] { "UserId", "ToUserId", "Status", });
+        new java.lang.String[] { "UserId", "ReceiverId", "Status", });
     internal_static_gim_im_GroupMemberNotify_descriptor =
       getDescriptor().getMessageType(15);
     internal_static_gim_im_GroupMemberNotify_fieldAccessorTable = new
@@ -19598,13 +19778,13 @@ java.lang.String defaultValue) {
     internal_static_gim_im_RtcSignal_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gim_im_RtcSignal_descriptor,
-        new java.lang.String[] { "SignalType", "FromUserId", "ToUserId", "Payload", "CallId", });
+        new java.lang.String[] { "SignalType", "SenderId", "ReceiverId", "Payload", "CallId", });
     internal_static_gim_im_RtcGroup_descriptor =
       getDescriptor().getMessageType(19);
     internal_static_gim_im_RtcGroup_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gim_im_RtcGroup_descriptor,
-        new java.lang.String[] { "SignalType", "FromUserId", "GroupId", "Payload", "CallId", });
+        new java.lang.String[] { "SignalType", "SenderId", "GroupId", "Payload", "CallId", });
     descriptor.resolveAllFeaturesImmutable();
   }
 

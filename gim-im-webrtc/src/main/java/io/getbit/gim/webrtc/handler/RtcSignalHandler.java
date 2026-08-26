@@ -33,7 +33,7 @@ public class RtcSignalHandler extends BaseHandler {
     public void handle(ImProto.Packet packet, Channel channel, String userId) {
         try {
             ImProto.RtcSignal signal = PacketCodec.parseRtcSignal(packet);
-            String targetId = signal.getToUserId();
+            String targetId = signal.getReceiverId();
 
             if (targetId.isEmpty()) {
                 logger.warn("RTC信令缺少目标用户: signalType={}, from={}", signal.getSignalType(), userId);

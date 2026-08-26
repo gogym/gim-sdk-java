@@ -71,11 +71,11 @@ public class RtcGroupHandler extends BaseHandler {
                     continue;
                 }
 
-                // 将群聊信令转换为单聊信令（设置 toUserId），复用现有路由基础设施
+                // 将群聊信令转换为单聊信令（设置 receiverId），复用现有路由基础设施
                 ImProto.RtcSignal memberSignal = ImProto.RtcSignal.newBuilder()
                         .setSignalType(rtcGroup.getSignalType())
-                        .setFromUserId(rtcGroup.getFromUserId())
-                        .setToUserId(memberId)
+                        .setSenderId(rtcGroup.getSenderId())
+                        .setReceiverId(memberId)
                         .setPayload(rtcGroup.getPayload())
                         .setCallId(rtcGroup.getCallId())
                         .build();

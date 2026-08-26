@@ -156,7 +156,7 @@ public class ClusterMessageRouter {
         } else if (cmd == Cmd.RTC_SIGNAL) {
             try {
                 ImProto.RtcSignal signal = PacketCodec.parseRtcSignal(packet);
-                String targetId = signal.getToUserId();
+                String targetId = signal.getReceiverId();
 
                 var targetChannels = channelManager.getChannels(targetId);
                 if (!targetChannels.isEmpty()) {
@@ -189,10 +189,10 @@ public class ClusterMessageRouter {
             // 根据 cmd 解析目标用户
             if (cmd == Cmd.FRIEND_REQUEST_NOTIFY) {
                 ImProto.FriendRequestNotify notify = PacketCodec.parseFriendRequestNotify(packet);
-                targetUserId = notify.getToUserId();
+                targetUserId = notify.getReceiverId();
             } else if (cmd == Cmd.FRIEND_STATUS_NOTIFY) {
                 ImProto.FriendStatusNotify notify = PacketCodec.parseFriendStatusNotify(packet);
-                targetUserId = notify.getToUserId();
+                targetUserId = notify.getReceiverId();
             } else if (cmd == Cmd.ONLINE_STATUS_NOTIFY) {
                 // 在线状态通知：投递给所有本地用户（由上层广播）
                 // 这里无法确定具体目标，跳过
