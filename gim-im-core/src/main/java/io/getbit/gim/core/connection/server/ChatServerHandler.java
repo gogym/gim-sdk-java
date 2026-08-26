@@ -65,11 +65,10 @@ public class ChatServerHandler extends SimpleChannelInboundHandler<ImProto.Packe
                 if (!success) {
                     channel.close();
                 } else {
-                    // 绑定成功，触发上线事件
-                    String userId = authHandler.getUserId(channel);
-                    DeviceType device = authHandler.getDevice(channel);
-                    if (userId != null) {
-                        facade.fireUserOnline(userId, device);
+                    // 绑定成功，触发上线事件（身份信息已由 handleBind 登记到 ConnectionInfo）
+                    ConnectionInfo connInfo = facade.getChannelManager().getConnectionInfo(channel.id().asLongText());
+                    if (connInfo != null) {
+                        facade.fireUserOnline(connInfo.userId(), connInfo.device());
                     }
                 }
             } else {
@@ -80,7 +79,12 @@ public class ChatServerHandler extends SimpleChannelInboundHandler<ImProto.Packe
         }
 
         // 已认证状态：按 cmd 路由
-        String userId = authHandler.getUserId(channel);
+        ConnectionInfo connInfo = facade.getChannelManager().getConnectionInfo(channel.id().asLongText());
+        // 连接档案不存在说明已被互踢替换或解绑，不再处理任何消息
+        if (connInfo == null) {
+            return;
+        }
+        String userId = connInfo.userId();
 
         // 已认证连接再次收到 BIND_REQ：客户端重连/网络切换导致的重复绑定
         // 回复 BIND_RESP 确认连接仍有效，避免客户端因等待响应超时而新建连接触发互踢
@@ -99,9 +103,9 @@ public class ChatServerHandler extends SimpleChannelInboundHandler<ImProto.Packe
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof IdleStateEvent idleEvent) {
             if (idleEvent.state() == IdleState.READER_IDLE) {
-                String userId = authHandler.getUserId(ctx.channel());
+                ConnectionInfo connInfo = facade.getChannelManager().getConnectionInfo(ctx.channel().id().asLongText());
                 logger.info("[{}] 读超时, userId={}, 断开连接",
-                        ctx.channel().id().asShortText(), userId);
+                        ctx.channel().id().asShortText(), connInfo != null ? connInfo.userId() : null);
                 ctx.close();
             }
         } else {
@@ -117,21 +121,10 @@ public class ChatServerHandler extends SimpleChannelInboundHandler<ImProto.Packe
         Channel channel = ctx.channel();
 
         ConnectionInfo connInfo = facade.getChannelManager().unbindByChannelId(channel.id().asLongText());
-        String userId = connInfo != null ? connInfo.userId() : authHandler.getUserId(channel);
-        DeviceType device = connInfo != null ? connInfo.device() : authHandler.getDevice(channel);
 
-        if (userId != null) {
-            if (connInfo == null) {
-                // 连接已提前解绑（被新连接替换或服务端主动踢人），无需重复清理，仅记录日志
-                if (Boolean.TRUE.equals(channel.attr(ConnectionAuthHandler.KICKED_BY_NEW_KEY).get())) {
-                    logger.info("[{}] 被新连接替换下线, userId={}, device={}",
-                            channel.id().asShortText(), userId, device);
-                } else {
-                    logger.info("[{}] 连接已提前解绑后断开, userId={}, device={}",
-                            channel.id().asShortText(), userId, device);
-                }
-                return;
-            }
+        if (connInfo != null) {
+            String userId = connInfo.userId();
+            DeviceType device = connInfo.device();
 
             logger.info("[{}] 用户断开, userId={}, device={}",
                     channel.id().asShortText(), userId, device);
@@ -142,8 +135,14 @@ public class ChatServerHandler extends SimpleChannelInboundHandler<ImProto.Packe
                 facade.getUserRouteService().unregister(userId);
                 facade.fireUserOffline(userId);
             }
+            return;
+        }
+
+        // 连接未登记或已提前解绑（被新连接替换/服务端踢人），无需重复清理，仅记录日志
+        if (Boolean.TRUE.equals(channel.attr(ConnectionAuthHandler.KICKED_BY_NEW_KEY).get())) {
+            logger.info("[{}] 被新连接替换下线（userId/device 详见互踢日志）", channel.id().asShortText());
         } else {
-            logger.info("[{}] 未认证连接断开", channel.id().asShortText());
+            logger.info("[{}] 连接已解绑或未认证即断开", channel.id().asShortText());
         }
     }
 
@@ -153,7 +152,8 @@ public class ChatServerHandler extends SimpleChannelInboundHandler<ImProto.Packe
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         String channelId = ctx.channel().id().asShortText();
-        String userId = authHandler.getUserId(ctx.channel());
+        ConnectionInfo connInfo = facade.getChannelManager().getConnectionInfo(ctx.channel().id().asLongText());
+        String userId = connInfo != null ? connInfo.userId() : null;
 
         if (cause instanceof DecoderException) {
             logger.warn("[{}] 协议解码失败, userId={}, 断开连接. 原因: {}",

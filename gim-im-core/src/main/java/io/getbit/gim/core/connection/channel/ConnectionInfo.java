@@ -10,8 +10,8 @@ import io.getbit.gim.protocol.codec.DeviceType;
  *
  * @param nodeId      所在 IM 节点 ID（集群模式用，单机可为 null）
  * @param userId      用户 ID
- * @param channelId   Netty ChannelId 字符串
  * @param device      设备类型
+ * @param deviceId    设备唯一标识（客户端持久化 UUID，用于区分同设备重连与异设备顶号）
  * @param connectedAt 连接建立时间（毫秒时间戳）
  *
  * @author gogym
@@ -19,15 +19,15 @@ import io.getbit.gim.protocol.codec.DeviceType;
 public record ConnectionInfo(
         String nodeId,
         String userId,
-        String channelId,
         DeviceType device,
+        String deviceId,
         long connectedAt
 ) {
 
     /**
      * 创建 ConnectionInfo（自动填充连接时间）
      */
-    public static ConnectionInfo of(String nodeId, String userId, String channelId, DeviceType device) {
-        return new ConnectionInfo(nodeId, userId, channelId, device, System.currentTimeMillis());
+    public static ConnectionInfo of(String nodeId, String userId, DeviceType device, String deviceId) {
+        return new ConnectionInfo(nodeId, userId, device, deviceId, System.currentTimeMillis());
     }
 }

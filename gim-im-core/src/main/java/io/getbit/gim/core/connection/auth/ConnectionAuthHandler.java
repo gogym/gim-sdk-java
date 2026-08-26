@@ -2,6 +2,7 @@ package io.getbit.gim.core.connection.auth;
 
 import io.getbit.gim.core.config.properties.GimProperties;
 import io.getbit.gim.core.connection.channel.ChannelManager;
+import io.getbit.gim.core.connection.channel.ConnectionInfo;
 import io.getbit.gim.core.routing.UserRouteService;
 import io.getbit.gim.core.spi.ImTokenVerifier;
 import io.getbit.gim.protocol.codec.*;
@@ -38,24 +39,9 @@ public class ConnectionAuthHandler {
 
     /**
      * Channel 属性：是否已认证
+     * （userId/device/deviceId 等连接身份信息统一存放于 ChannelManager 的 ConnectionInfo）
      */
     public static final AttributeKey<Boolean> AUTH_KEY = AttributeKey.valueOf("authenticated");
-
-    /**
-     * Channel 属性：绑定的用户ID
-     */
-    public static final AttributeKey<String> USER_ID_KEY = AttributeKey.valueOf("userId");
-
-    /**
-     * Channel 属性：设备类型
-     */
-    public static final AttributeKey<DeviceType> DEVICE_KEY = AttributeKey.valueOf("deviceType");
-
-    /**
-     * Channel 属性：设备唯一标识（客户端持久化 UUID）
-     * 互踢时用于区分"同一台设备重连"（同 deviceId，静默替换）与"另一台设备顶号"（异 deviceId，立即踢）
-     */
-    public static final AttributeKey<String> DEVICE_ID_KEY = AttributeKey.valueOf("deviceId");
 
     /**
      * Channel 属性：被新连接替换标记（仅用于日志区分）
@@ -115,18 +101,15 @@ public class ConnectionAuthHandler {
             // 4. 解析设备类型
             DeviceType device = DeviceType.fromCode(deviceStr);
 
-            // 5. 绑定通道（同设备互踢）
-            Channel oldChannel = channelManager.bind(userId, device, channel);
+            // 5. 绑定通道（同设备互踢），deviceId 随连接信息一并登记
+            ChannelManager.BindResult bindResult = channelManager.bind(userId, device, bindReq.getDeviceId(), channel);
 
-            // 6. 设置 Channel 属性
+            // 6. 标记已认证（身份信息已随绑定登记到 ConnectionInfo）
             channel.attr(AUTH_KEY).set(true);
-            channel.attr(USER_ID_KEY).set(userId);
-            channel.attr(DEVICE_KEY).set(device);
-            channel.attr(DEVICE_ID_KEY).set(bindReq.getDeviceId());
 
             // 7. 处理旧连接：同设备重连静默替换，异设备顶号立即踢下线
-            if (oldChannel != null && oldChannel.isActive()) {
-                kickOldChannel(userId, device, bindReq.getDeviceId(), oldChannel);
+            if (bindResult != null && bindResult.oldChannel().isActive()) {
+                kickOldChannel(userId, device, bindReq.getDeviceId(), bindResult.oldChannel(), bindResult.oldInfo());
             }
 
             // 8. 回复绑定成功
@@ -157,10 +140,12 @@ public class ConnectionAuthHandler {
      * @param channel 已认证通道
      */
     public void handleRebind(ImProto.Packet packet, Channel channel) {
-        String userId = getUserId(channel);
-        if (userId == null) {
+        // 从连接档案获取身份信息（连接已认证但档案可能已被互踢移除，此时不再处理）
+        ConnectionInfo info = channelManager.getConnectionInfo(channel.id().asLongText());
+        if (info == null) {
             return;
         }
+        String userId = info.userId();
 
         // 防御：重复绑定携带的 userId 必须与当前连接一致
         try {
@@ -201,11 +186,12 @@ public class ConnectionAuthHandler {
      * @param device      设备类型
      * @param newDeviceId 新连接携带的设备唯一标识
      * @param oldChannel  旧连接
+     * @param oldInfo     旧连接的 ConnectionInfo（含旧 deviceId）
      */
-    private void kickOldChannel(String userId, DeviceType device, String newDeviceId, Channel oldChannel) {
+    private void kickOldChannel(String userId, DeviceType device, String newDeviceId, Channel oldChannel, ConnectionInfo oldInfo) {
         oldChannel.attr(KICKED_BY_NEW_KEY).set(true);
 
-        String oldDeviceId = oldChannel.attr(DEVICE_ID_KEY).get();
+        String oldDeviceId = oldInfo != null ? oldInfo.deviceId() : null;
 
         // 同一台设备重连 → 静默替换，不发送 KickNotify
         if (newDeviceId != null && newDeviceId.equals(oldDeviceId)) {
@@ -228,20 +214,6 @@ public class ConnectionAuthHandler {
     public boolean isAuthenticated(Channel channel) {
         Boolean auth = channel.attr(AUTH_KEY).get();
         return auth != null && auth;
-    }
-
-    /**
-     * 获取通道绑定的用户ID
-     */
-    public String getUserId(Channel channel) {
-        return channel.attr(USER_ID_KEY).get();
-    }
-
-    /**
-     * 获取通道绑定的设备类型
-     */
-    public DeviceType getDevice(Channel channel) {
-        return channel.attr(DEVICE_KEY).get();
     }
 
     /**
