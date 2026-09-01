@@ -14,13 +14,18 @@ import java.util.List;
 /**
  * RtcGroupHandler.java
  *
- * WebRTC 群聊信令处理器
- * 将群聊信令扇出投递给群内所有成员（排除发送者）
+ * WebRTC 群聊信令处理器（cmd=51）
+ *
+ * 职责分拆：
+ * 1. signalType 1~8（媒体信令 offer/answer/ICE 等）：扇出转发给群内所有成员（排除发送者），
+ *    Mesh 模式下成员间 P2P 建连使用
+ * 2. signalType 9~16（群通话生命周期信令）：委派给 GroupCallService 处理
  *
  * 扇出策略：
  * 1. 解析 RtcGroup，获取群成员列表
  * 2. 为每个成员构建 RtcSignal（单聊信令），设置 toUserId = memberId
  * 3. 逐人路由：本地 → 直接投递，远程 → Redis（复用 RTC_SIGNAL 集群分支）
+ * 4. 媒体信令离线直接丢弃（offer/ICE 为强时效信令，离线投递无意义且会污染客户端状态）
  *
  * @author gogym
  */
@@ -28,10 +33,22 @@ public class RtcGroupHandler extends BaseHandler {
 
     private final ImGroupMemberProvider groupMemberProvider;
 
+    /**
+     * 群通话生命周期服务（signalType 9~16），未启用群通话时为 null
+     */
+    private final GroupCallService groupCallService;
+
     public RtcGroupHandler(IMServerFacade facade,
                            ImGroupMemberProvider groupMemberProvider) {
+        this(facade, groupMemberProvider, null);
+    }
+
+    public RtcGroupHandler(IMServerFacade facade,
+                           ImGroupMemberProvider groupMemberProvider,
+                           GroupCallService groupCallService) {
         super(facade);
         this.groupMemberProvider = groupMemberProvider;
+        this.groupCallService = groupCallService;
     }
 
     @Override
@@ -44,6 +61,17 @@ public class RtcGroupHandler extends BaseHandler {
         try {
             ImProto.RtcGroup rtcGroup = PacketCodec.parseRtcGroup(packet);
             String groupId = rtcGroup.getGroupId();
+
+            // 群通话生命周期信令（signalType 9~16）委派给 GroupCallService
+            if (rtcGroup.getSignalType() >= GroupCallService.SIGNAL_GROUP_CALL_REQUEST) {
+                if (groupCallService != null) {
+                    groupCallService.handle(packet, channel, userId, rtcGroup);
+                } else {
+                    logger.debug("群通话未启用，忽略生命周期信令: signalType={}, userId={}",
+                            rtcGroup.getSignalType(), userId);
+                }
+                return;
+            }
 
             if (groupId.isEmpty()) {
                 logger.warn("RTC群聊信令缺少群组ID: signalType={}, from={}", rtcGroup.getSignalType(), userId);
@@ -85,7 +113,7 @@ public class RtcGroupHandler extends BaseHandler {
                 if (delivered) {
                     deliveredCount++;
                 } else {
-                    fireOfflineMessage(fwdPacket, memberId, "OFFLINE");
+                    // 媒体信令为强时效信令，离线丢弃（不触发离线回调，避免过期 offer/ICE 污染客户端状态）
                     offlineCount++;
                 }
             }

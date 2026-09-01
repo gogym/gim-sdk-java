@@ -12,6 +12,7 @@ import io.getbit.gim.core.message.handler.DefaultMessageDispatcher;
 import io.getbit.gim.core.message.handler.MessageDispatcher;
 import io.getbit.gim.core.routing.ClusterMessageRouter;
 import io.getbit.gim.core.routing.UserRouteService;
+import io.getbit.gim.core.spi.ConnectionCloseListener;
 import io.getbit.gim.core.spi.ImEventListener;
 import io.getbit.gim.core.spi.ImRedisAdapter;
 import io.getbit.gim.core.spi.ImRedisSubscriber;
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
 /**
@@ -77,6 +79,11 @@ public class IMServerFacade {
      */
     @Getter
     private final ClusterMessageRouter clusterRouter;
+
+    /**
+     * 连接关闭监听器（用户全部设备离线时触发，用于模块级资源清理，如群通话掉线清理）
+     */
+    private final List<ConnectionCloseListener> closeListeners = new CopyOnWriteArrayList<>();
 
     private IMServerFacade(Builder builder) {
         this.config = builder.config;
@@ -227,6 +234,16 @@ public class IMServerFacade {
     }
 
     /**
+     * 注册连接关闭监听器
+     * 在用户全部设备离线时触发（与 fireUserOffline 同一时机）
+     */
+    public void registerCloseListener(ConnectionCloseListener listener) {
+        if (listener != null) {
+            closeListeners.add(listener);
+        }
+    }
+
+    /**
      * 触发用户下线事件
      */
     public void fireUserOffline(String userId) {
@@ -243,6 +260,15 @@ public class IMServerFacade {
         // 通知好友下线
         if (friendNotifyService != null) {
             friendNotifyService.notifyUserOffline(userId);
+        }
+
+        // 通知连接关闭监听器（模块级资源清理）
+        for (ConnectionCloseListener listener : closeListeners) {
+            try {
+                listener.onConnectionClosed(userId);
+            } catch (Exception e) {
+                logger.error("连接关闭监听器回调异常: onConnectionClosed, userId={}", userId, e);
+            }
         }
     }
 }

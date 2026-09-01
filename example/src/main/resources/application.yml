@@ -41,13 +41,28 @@ gim:
   msg:
     ack-timeout-seconds: 10             # ACK 超时时间
 
-  # WebRTC TURN 服务器配置（可选）
+  # WebRTC TURN 服务器配置（可选，Mesh 模式下随 roomState 下发给客户端）
   webrtc:
     turn:
       stun-url: stun:127.0.0.1:3478
       turn-url: turn:127.0.0.1:3478
       shared-secret: secret             # TURN 共享密钥
       credential-ttl: 3600              # 凭证有效期（秒）
+
+  # ==================== 群视频通话（混合架构：Mesh + SFU） ====================
+  rtc-group-call:
+    enabled: true                # 是否启用群通话
+    mode: auto                   # auto-按人数自动选择 / mesh-纯Mesh / sfu-纯SFU
+    mesh-max-members: 8          # Mesh 人数上限（auto 模式下超过自动切换 SFU）
+    invite-timeout-seconds: 60   # 邀请超时：超时无人加入自动结束
+    empty-room-ttl-seconds: 30   # 空房间回收时间
+    sfu-provider: none           # none-不启用SFU / livekit-内置LiveKit参考实现
+    # SFU 配置（sfu-provider: livekit 时启用，支持 20+ 人大群）：
+    # sfu-host: http://127.0.0.1:7880
+    # sfu-api-key: devkey
+    # sfu-api-secret: secret
+    # sfu-ws-url: ws://127.0.0.1:7880
+    # sfu-token-ttl-seconds: 3600
 
 # ==================== 数据库配置 ====================
 spring:

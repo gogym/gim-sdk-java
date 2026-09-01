@@ -4,6 +4,7 @@ import io.getbit.gim.core.config.properties.CacheProperties;
 import io.getbit.gim.core.config.properties.GimProperties;
 import io.getbit.gim.core.config.properties.MessageProperties;
 import io.getbit.gim.core.config.properties.NettyProperties;
+import io.getbit.gim.core.config.properties.RtcGroupCallProperties;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -29,6 +30,9 @@ public class GimSpringProperties {
 
     /** 消息发送配置 */
     private MessageProperties msg = new MessageProperties();
+
+    /** 群视频通话配置（混合架构：Mesh + SFU） */
+    private RtcGroupCallProperties rtcGroupCall = new RtcGroupCallProperties();
 
     /** 是否开启心跳 */
     private boolean enableHeartBeat = true;
@@ -59,6 +63,7 @@ public class GimSpringProperties {
         props.setNetty(this.netty);
         props.setCache(this.cache);
         props.setMsg(this.msg);
+        props.setRtcGroupCall(this.rtcGroupCall);
         props.setEnableHeartBeat(this.enableHeartBeat);
         props.setHeartBeatInterval(this.heartBeatInterval);
         props.setServerId(this.serverId);

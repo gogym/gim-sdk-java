@@ -66,6 +66,12 @@ public class WebRtcSessionManager {
     public WebRtcSession getSession(String callId) { return sessionMap.getIfPresent(callId); }
     public String getCallIdByUser(String userId) { return userCallMap.getIfPresent(userId); }
     public boolean isInCall(String userId) { return userCallMap.getIfPresent(userId) != null; }
+
+    /**
+     * 统一占用查询：用户是否在任一通话中
+     * 群通话占用由 GroupCallSessionManager.isUserBusy 统一判定（含本管理器的 1:1 通话）
+     */
+    public boolean isUserBusy(String userId) { return isInCall(userId); }
     public WebRtcSession getSessionByUser(String userId) {
         String callId = userCallMap.getIfPresent(userId);
         return callId == null ? null : sessionMap.getIfPresent(callId);

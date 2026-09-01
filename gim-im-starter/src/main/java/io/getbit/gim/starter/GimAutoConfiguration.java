@@ -6,6 +6,9 @@ import io.getbit.gim.core.bootstrap.IMServerFacade;
 import io.getbit.gim.core.connection.server.NettyServer;
 import io.getbit.gim.core.message.handler.BaseHandler;
 import io.getbit.gim.core.spi.*;
+import io.getbit.gim.webrtc.GroupCallSessionManager;
+import io.getbit.gim.webrtc.TurnCredentialService;
+import io.getbit.gim.webrtc.handler.GroupCallService;
 import io.getbit.gim.webrtc.handler.RtcGroupHandler;
 import io.getbit.gim.webrtc.handler.RtcSignalHandler;
 import org.springframework.beans.factory.ObjectProvider;
@@ -48,7 +51,9 @@ public class GimAutoConfiguration {
                                                       ObjectProvider<ImRedisSubscriber> redisSubscriberProvider,
                                                       ObjectProvider<ImGroupMemberProvider> groupMemberProviderProvider,
                                                       ObjectProvider<ImFriendProvider> friendProviderProvider,
-                                                      ObjectProvider<List<ImEventListener>> eventListenersProvider) {
+                                                      ObjectProvider<List<ImEventListener>> eventListenersProvider,
+                                                      ObjectProvider<GroupCallSessionManager> groupCallManagerProvider,
+                                                      ObjectProvider<TurnCredentialService> turnCredentialServiceProvider) {
         GimBootstrap.Builder builder = GimBootstrap.builder()
                 .config(config)
                 .tokenVerifier(tokenVerifier)
@@ -77,11 +82,19 @@ public class GimAutoConfiguration {
 
         // RTC Handler 后置注册钩子
         ImGroupMemberProvider rtcGroupProvider = groupMemberProviderProvider.getIfAvailable();
+        GroupCallSessionManager groupCallManager = groupCallManagerProvider.getIfAvailable();
+        TurnCredentialService turnCredentialService = turnCredentialServiceProvider.getIfAvailable();
         builder.postBuildHook(facade -> {
             List<BaseHandler> rtcHandlers = new ArrayList<>();
             rtcHandlers.add(new RtcSignalHandler(facade));
             if (rtcGroupProvider != null) {
-                rtcHandlers.add(new RtcGroupHandler(facade, rtcGroupProvider));
+                GroupCallService groupCallService = null;
+                if (groupCallManager != null) {
+                    // 群通话生命周期信令处理 + 掉线清理（用户全部设备离线时回收房间成员）
+                    groupCallService = new GroupCallService(facade, groupCallManager, rtcGroupProvider, turnCredentialService);
+                    facade.registerCloseListener(groupCallManager::onDisconnect);
+                }
+                rtcHandlers.add(new RtcGroupHandler(facade, rtcGroupProvider, groupCallService));
             }
             return rtcHandlers;
         });

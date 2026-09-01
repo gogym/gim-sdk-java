@@ -34,6 +34,11 @@ public class GimProperties {
      */
     private MessageProperties msg = new MessageProperties();
 
+    /**
+     * 群视频通话配置（混合架构：Mesh + SFU）
+     */
+    private RtcGroupCallProperties rtcGroupCall = new RtcGroupCallProperties();
+
     // ==================== 心跳配置 ====================
 
     /**

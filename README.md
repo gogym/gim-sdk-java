@@ -8,6 +8,7 @@
 - **SPI 扩展** — 通过 7 个 SPI 接口灵活对接你的 Redis、Token 验证、ID 生成、MQ 等
 - **高性能长连接** — 基于 Netty 4 + Protobuf 二进制协议，支持心跳检测、ACK 确认、自动重发
 - **丰富消息能力** — 支持单聊、群聊、消息撤回、已读回执、投递确认、RTC 信令
+- **群视频通话** — 混合架构：小群（≤8 人）Mesh P2P 直连，大群（20+ 人）对接 SFU，服务端统一管理房间生命周期
 - **集群模式** — 通过 Redis Pub/Sub 实现跨节点消息路由，水平扩展
 - **健康检查** — 内置 Spring Boot Actuator 健康指标，方便运维监控
 
@@ -141,6 +142,50 @@ public class Application {
 }
 ```
 
+## 群视频通话（混合架构：Mesh + SFU）
+
+SDK 内置群通话房间生命周期管理，服务端能力由 `gim-im-starter` 自动装配，业务方只需配置即可：
+
+- **Mesh 模式**（≤ `mesh-max-members` 人，默认 8）：成员间 P2P 直连，服务端只做信令协调，零媒体服务器成本
+- **SFU 模式**（>8 人，支持 20+）：SDK 负责房间协调与接入凭证签发（内置 LiveKit 参考实现，可通过 `SfuAdapter` SPI 对接任意 SFU），媒体流由外部 SFU 承载
+- 模式选择：`mode: auto` 时按人数自动切换，也支持固定 `mesh` / `sfu`
+
+### 信令流程（cmd=51 RtcGroup，signalType 9~16）
+
+| signalType | 名称 | 方向 | 说明 |
+|-----------|------|------|------|
+| 9 | groupCallRequest | 客户端 → 服务端 | 发起群通话，payload 携带 callType、可选 inviteeIds |
+| 10 | groupCallInvite | 服务端 → 成员 | 逐成员下发邀请 |
+| 11 | groupCallJoin | 客户端 → 服务端 | 加入房间，回应 roomState(16) |
+| 12 | groupCallReject | 客户端 → 服务端 | 拒绝邀请 |
+| 13 | groupCallLeave | 客户端 → 服务端 | 主动退出 |
+| 14 | groupCallEnd | 客户端 → 服务端 | 发起人结束全员通话 |
+| 15 | participantNotify | 服务端 → 客户端 | 成员变更通知（join/leave/reject/ended） |
+| 16 | roomState | 服务端 → 客户端 | 房间快照 + 成员列表 + SFU token / TURN 凭据 |
+
+Mesh 模式下的媒体信令（offer/answer/ICE，signalType 1~8）与 1:1 通话完全一致，由 `RtcGroupHandler` 扇出转发；掉线清理、邀请超时、空房间回收均由服务端自动处理。
+
+### 配置示例
+
+```yaml
+gim:
+  rtc-group-call:
+    enabled: true                # 是否启用群通话
+    mode: auto                   # auto / mesh / sfu
+    mesh-max-members: 8          # Mesh 人数上限
+    invite-timeout-seconds: 60   # 邀请超时
+    empty-room-ttl-seconds: 30   # 空房间回收
+    sfu-provider: none           # none / livekit
+    # SFU 配置（sfu-provider: livekit 时启用）：
+    # sfu-host: http://127.0.0.1:7880
+    # sfu-api-key: devkey
+    # sfu-api-secret: secret
+    # sfu-ws-url: wss://im.example.com:7880
+    # sfu-token-ttl-seconds: 3600
+```
+
+> 完整客户端信令构造示例参考 `example/src/main/java/com/example/im/GroupCallExample.java`。
+
 ## 示例项目
 
 `example` 模块提供了完整的对接示例，包含所有 SPI 接口的参考实现：
@@ -148,6 +193,7 @@ public class Application {
 ```
 example/src/main/java/com/example/im/
 ├── ExampleApplication.java        # 启动类
+├── GroupCallExample.java          # 群视频通话信令流程示例
 └── spi/
     ├── RedisAdapterImpl.java      # Redis 适配器
     ├── RedisSubscriberImpl.java   # Redis Pub/Sub 订阅

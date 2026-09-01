@@ -28,6 +28,16 @@ public class RtcSignalValidator {
     private static final int SIGNAL_CALL_CANCEL = 7;
     private static final int SIGNAL_CALL_HANGUP = 8;
 
+    // 群通话生命周期信令（由 GroupCallService 处理）
+    private static final int SIGNAL_GROUP_CALL_REQUEST = 9;
+    private static final int SIGNAL_GROUP_CALL_INVITE = 10;
+    private static final int SIGNAL_GROUP_CALL_JOIN = 11;
+    private static final int SIGNAL_GROUP_CALL_REJECT = 12;
+    private static final int SIGNAL_GROUP_CALL_LEAVE = 13;
+    private static final int SIGNAL_GROUP_CALL_END = 14;
+    private static final int SIGNAL_PARTICIPANT_NOTIFY = 15;
+    private static final int SIGNAL_ROOM_STATE = 16;
+
     private static final Gson GSON = new Gson();
 
     /**
@@ -46,6 +56,28 @@ public class RtcSignalValidator {
      */
     public static boolean validateGroupPayload(ImProto.RtcGroup groupSignal) {
         return validatePayload(groupSignal.getPayload(), groupSignal.getSignalType(), groupSignal.getSenderId());
+    }
+
+    /**
+     * 校验群通话生命周期信令（signalType 9~16）的 payload
+     * 仅 groupCallRequest(9) 需携带 callType，其余信令允许空 payload（房间定位依赖 proto roomId 字段）
+     *
+     * @return true 校验通过，false 校验失败
+     */
+    public static boolean validateGroupLifecyclePayload(int signalType, String payload, String senderId) {
+        return switch (signalType) {
+            case SIGNAL_GROUP_CALL_REQUEST -> {
+                GroupCallRequestDto dto = parseDto(payload, GroupCallRequestDto.class, signalType, senderId);
+                yield dto != null && isNotBlank(dto.getCallType());
+            }
+            case SIGNAL_GROUP_CALL_INVITE, SIGNAL_GROUP_CALL_JOIN, SIGNAL_GROUP_CALL_REJECT,
+                 SIGNAL_GROUP_CALL_LEAVE, SIGNAL_GROUP_CALL_END,
+                 SIGNAL_PARTICIPANT_NOTIFY, SIGNAL_ROOM_STATE -> true;
+            default -> {
+                logger.warn("RTC未知群通话信令类型: signalType={}, from={}", signalType, senderId);
+                yield false;
+            }
+        };
     }
 
     /**
