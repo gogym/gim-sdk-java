@@ -22,6 +22,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "gim")
 public class GimSpringProperties {
 
+    /** 总开关：是否启动 IM 服务器（false 时不监听端口、不接入集群，组件 Bean 仍注册） */
+    private boolean enable = true;
+
     /** Netty服务器配置 */
     private NettyProperties netty = new NettyProperties();
 

@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
  *
  * WebRTC 模块 Spring Boot 自动配置
  * 包含 1:1 通话、TURN 凭据与群通话（混合架构：Mesh + SFU）组件
+ * 服务器启停由 gim.enable 控制（见 GimAutoConfiguration 的 nettyServerLifecycle）
  *
  * @author gogym
  */

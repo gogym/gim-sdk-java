@@ -13,6 +13,7 @@ import io.getbit.gim.webrtc.handler.RtcGroupHandler;
 import io.getbit.gim.webrtc.handler.RtcSignalHandler;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +28,8 @@ import java.util.List;
  *
  * GIM SDK Spring Boot 自动配置
  * 使用方只需引入 gim-im-starter 依赖 + 提供 SPI 实现即可自动启动
+ * 配置 gim.enable=false 可禁用 IM 服务器启动（默认 true）：
+ * 各组件 Bean 仍然注册（业务代码可注入 IMServerFacade），只是不监听端口、不接入集群
  *
  * @author gogym
  */
@@ -116,7 +119,12 @@ public class GimAutoConfiguration {
 
     // ==================== Netty 生命周期适配 ====================
 
+    /**
+     * gim.enable=false 时不注册该生命周期 Bean，IM 服务器不会启动；
+     * 其余组件 Bean 正常存在，业务代码仍可注入 IMServerFacade 发送消息等
+     */
     @Bean
+    @ConditionalOnProperty(prefix = "gim", name = "enable", havingValue = "true", matchIfMissing = true)
     public SmartLifecycle nettyServerLifecycle(GimBootstrap.StartContext startContext) {
         return new NettyServerLifecycleAdapter(startContext);
     }
