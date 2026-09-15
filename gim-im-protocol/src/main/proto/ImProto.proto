@@ -180,4 +180,5 @@ message RtcGroup {
 // 1=offer, 2=answer, 3=iceCandidate,
 // 4=callRequest, 5=callAccept, 6=callReject, 7=callCancel, 8=callHangup,
 // 9=groupCallRequest, 10=groupCallInvite, 11=groupCallJoin, 12=groupCallReject,
-// 13=groupCallLeave, 14=groupCallEnd, 15=participantNotify, 16=roomState
+// 13=groupCallLeave, 14=groupCallEnd, 15=participantNotify, 16=roomState,
+// 17=mediaState（媒体开关状态，RtcSignal 单聊信令专用，payload: camera/mic）

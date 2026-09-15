@@ -28,6 +28,9 @@ public class RtcSignalValidator {
     private static final int SIGNAL_CALL_CANCEL = 7;
     private static final int SIGNAL_CALL_HANGUP = 8;
 
+    /** 媒体开关状态（对端切换摄像头/麦克风时通知，payload: camera/mic 至少一项） */
+    private static final int SIGNAL_MEDIA_STATE = 17;
+
     // 群通话生命周期信令（由 GroupCallService 处理）
     private static final int SIGNAL_GROUP_CALL_REQUEST = 9;
     private static final int SIGNAL_GROUP_CALL_INVITE = 10;
@@ -115,6 +118,11 @@ public class RtcSignalValidator {
             case SIGNAL_CALL_HANGUP -> {
                 WebRtcHangupDto dto = parseDto(payload, WebRtcHangupDto.class, type, senderId);
                 yield dto != null && isNotBlank(dto.getReason());
+            }
+            case SIGNAL_MEDIA_STATE -> {
+                // camera/mic 至少一项非 null（null 表示该项未变化）
+                WebRtcMediaStateDto dto = parseDto(payload, WebRtcMediaStateDto.class, type, senderId);
+                yield dto != null && (dto.getCamera() != null || dto.getMic() != null);
             }
             default -> {
                 logger.warn("RTC未知信令类型: signalType={}, from={}", type, senderId);
