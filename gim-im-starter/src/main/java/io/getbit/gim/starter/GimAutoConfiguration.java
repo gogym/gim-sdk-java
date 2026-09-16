@@ -89,7 +89,8 @@ public class GimAutoConfiguration {
         TurnCredentialService turnCredentialService = turnCredentialServiceProvider.getIfAvailable();
         builder.postBuildHook(facade -> {
             List<BaseHandler> rtcHandlers = new ArrayList<>();
-            rtcHandlers.add(new RtcSignalHandler(facade));
+            // 单聊信令转发 + 通话建立信令注入 TURN 凭证（服务未配置 turn 时为 null，退化为纯转发）
+            rtcHandlers.add(new RtcSignalHandler(facade, turnCredentialService));
             if (rtcGroupProvider != null) {
                 GroupCallService groupCallService = null;
                 if (groupCallManager != null) {
