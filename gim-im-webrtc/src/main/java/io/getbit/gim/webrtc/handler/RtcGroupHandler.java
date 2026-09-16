@@ -6,6 +6,7 @@ import io.getbit.gim.core.spi.ImGroupMemberProvider;
 import io.getbit.gim.protocol.codec.Cmd;
 import io.getbit.gim.protocol.codec.ImProto;
 import io.getbit.gim.protocol.codec.PacketCodec;
+import io.getbit.gim.webrtc.groupcall.GroupCallService;
 import io.getbit.gim.webrtc.util.RtcSignalValidator;
 import io.netty.channel.Channel;
 

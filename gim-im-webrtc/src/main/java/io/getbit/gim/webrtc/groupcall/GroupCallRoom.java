@@ -1,5 +1,7 @@
-package io.getbit.gim.webrtc;
+package io.getbit.gim.webrtc.groupcall;
 
+import io.getbit.gim.webrtc.enums.GroupCallMode;
+import io.getbit.gim.webrtc.enums.GroupCallRoomStatus;
 import lombok.Getter;
 
 import java.util.List;
@@ -15,27 +17,21 @@ import java.util.stream.Collectors;
  *
  * @author gogym
  */
+@Getter
 public class GroupCallRoom {
 
-    @Getter
     private final String roomId;
 
-    @Getter
     private final String callId;
 
-    @Getter
     private final String groupId;
 
-    @Getter
     private final String initiatorId;
 
-    @Getter
     private final GroupCallMode mode;
 
-    @Getter
     private final String callType;
 
-    @Getter
     private volatile GroupCallRoomStatus status;
 
     /**
@@ -43,13 +39,11 @@ public class GroupCallRoom {
      */
     private final Map<String, GroupCallMember> members = new ConcurrentHashMap<>();
 
-    @Getter
     private final long createTime;
 
     /**
      * 进入通话中的时间（毫秒）
      */
-    @Getter
     private volatile long talkTime;
 
     public GroupCallRoom(String roomId, String callId, String groupId, String initiatorId,
@@ -78,10 +72,6 @@ public class GroupCallRoom {
 
     public void addMember(GroupCallMember member) {
         members.put(member.getUserId(), member);
-    }
-
-    public Map<String, GroupCallMember> getMembers() {
-        return members;
     }
 
     /**

@@ -1,4 +1,4 @@
-package io.getbit.gim.webrtc;
+package io.getbit.gim.webrtc.enums;
 
 /**
  * GroupCallRoomStatus.java

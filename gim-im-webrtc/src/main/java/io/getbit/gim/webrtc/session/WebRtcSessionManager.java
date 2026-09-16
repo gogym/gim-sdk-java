@@ -1,7 +1,8 @@
-package io.getbit.gim.webrtc;
+package io.getbit.gim.webrtc.session;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import io.getbit.gim.webrtc.enums.WebRtcSessionStatus;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 

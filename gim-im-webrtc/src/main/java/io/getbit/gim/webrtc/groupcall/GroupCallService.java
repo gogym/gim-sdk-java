@@ -1,4 +1,4 @@
-package io.getbit.gim.webrtc.handler;
+package io.getbit.gim.webrtc.groupcall;
 
 import com.google.gson.Gson;
 import io.getbit.gim.core.bootstrap.IMServerFacade;
@@ -7,15 +7,11 @@ import io.getbit.gim.core.spi.ImGroupMemberProvider;
 import io.getbit.gim.protocol.codec.Cmd;
 import io.getbit.gim.protocol.codec.ImProto;
 import io.getbit.gim.protocol.codec.PacketCodec;
-import io.getbit.gim.webrtc.GroupCallListener;
-import io.getbit.gim.webrtc.GroupCallMember;
-import io.getbit.gim.webrtc.GroupCallMemberStatus;
-import io.getbit.gim.webrtc.GroupCallMode;
-import io.getbit.gim.webrtc.GroupCallRoom;
-import io.getbit.gim.webrtc.GroupCallRoomStatus;
-import io.getbit.gim.webrtc.GroupCallSessionManager;
-import io.getbit.gim.webrtc.SfuAdapter;
-import io.getbit.gim.webrtc.TurnCredentialService;
+import io.getbit.gim.webrtc.enums.GroupCallMemberStatus;
+import io.getbit.gim.webrtc.enums.GroupCallMode;
+import io.getbit.gim.webrtc.enums.GroupCallRoomStatus;
+import io.getbit.gim.webrtc.sfu.SfuAdapter;
+import io.getbit.gim.webrtc.sfu.TurnCredentialService;
 import io.getbit.gim.webrtc.dto.GroupCallInviteDto;
 import io.getbit.gim.webrtc.dto.GroupCallParticipantDto;
 import io.getbit.gim.webrtc.dto.GroupCallRequestDto;

@@ -1,5 +1,6 @@
-package io.getbit.gim.webrtc;
+package io.getbit.gim.webrtc.groupcall;
 
+import io.getbit.gim.webrtc.enums.GroupCallMemberStatus;
 import io.netty.channel.Channel;
 import lombok.Data;
 

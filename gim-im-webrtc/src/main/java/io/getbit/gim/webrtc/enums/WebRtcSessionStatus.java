@@ -1,5 +1,8 @@
-package io.getbit.gim.webrtc;
+package io.getbit.gim.webrtc.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum WebRtcSessionStatus {
     CALLING(1, "呼叫中"), RINGING(2, "响铃中"), CONNECTING(3, "连接中"),
     TALKING(4, "通话中"), ENDED(5, "已挂断"), REJECTED(6, "已拒绝"),
@@ -8,10 +11,5 @@ public enum WebRtcSessionStatus {
     private final int code;
     private final String desc;
     WebRtcSessionStatus(int code, String desc) { this.code = code; this.desc = desc; }
-    public int getCode() { return code; }
-    public String getDesc() { return desc; }
-    public static WebRtcSessionStatus fromCode(int code) {
-        for (WebRtcSessionStatus s : values()) if (s.code == code) return s;
-        return null;
-    }
+
 }

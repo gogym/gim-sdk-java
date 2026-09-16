@@ -8,16 +8,14 @@ import io.getbit.gim.core.message.handler.BaseHandler;
 import io.getbit.gim.protocol.codec.Cmd;
 import io.getbit.gim.protocol.codec.ImProto;
 import io.getbit.gim.protocol.codec.PacketCodec;
-import io.getbit.gim.webrtc.TurnCredentialService;
+import io.getbit.gim.webrtc.sfu.TurnCredentialService;
 import io.getbit.gim.webrtc.util.RtcSignalValidator;
 import io.netty.channel.Channel;
 
-import java.util.List;
 import java.util.Map;
 
 /**
  * RtcSignalHandler.java
- *
  * WebRTC 单聊信令处理器
  * 在两端之间转发 WebRTC 信令（offer/answer/ICE candidate 等）
  * 通话建立信令（callRequest/callAccept）转发前注入 TURN 临时凭证，
@@ -109,7 +107,7 @@ public class RtcSignalHandler extends BaseHandler {
                 return signal;
             }
             String originPayload = signal.getPayload();
-            JsonObject payload = (originPayload == null || originPayload.isEmpty())
+            JsonObject payload = originPayload.isEmpty()
                     ? new JsonObject()
                     : JsonParser.parseString(originPayload).getAsJsonObject();
             payload.add(TURN_PAYLOAD_KEY, GSON.toJsonTree(turnInfo));

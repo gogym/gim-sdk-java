@@ -2,12 +2,12 @@ package io.getbit.gim.starter;
 
 import io.getbit.gim.core.config.properties.GimProperties;
 import io.getbit.gim.core.config.properties.RtcGroupCallProperties;
-import io.getbit.gim.webrtc.GroupCallConfig;
-import io.getbit.gim.webrtc.GroupCallSessionManager;
-import io.getbit.gim.webrtc.LiveKitSfuAdapter;
-import io.getbit.gim.webrtc.SfuAdapter;
-import io.getbit.gim.webrtc.TurnCredentialService;
-import io.getbit.gim.webrtc.WebRtcSessionManager;
+import io.getbit.gim.webrtc.groupcall.GroupCallConfig;
+import io.getbit.gim.webrtc.groupcall.GroupCallSessionManager;
+import io.getbit.gim.webrtc.session.WebRtcSessionManager;
+import io.getbit.gim.webrtc.sfu.LiveKitSfuAdapter;
+import io.getbit.gim.webrtc.sfu.SfuAdapter;
+import io.getbit.gim.webrtc.sfu.TurnCredentialService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

@@ -1,5 +1,6 @@
-package io.getbit.gim.webrtc;
+package io.getbit.gim.webrtc.session;
 
+import io.getbit.gim.webrtc.enums.WebRtcSessionStatus;
 import io.netty.channel.Channel;
 import lombok.Data;
 

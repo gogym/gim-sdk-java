@@ -1,4 +1,4 @@
-package io.getbit.gim.webrtc;
+package io.getbit.gim.webrtc.sfu;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;

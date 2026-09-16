@@ -1,5 +1,12 @@
-package io.getbit.gim.webrtc;
+package io.getbit.gim.webrtc.groupcall;
 
+import io.getbit.gim.webrtc.enums.GroupCallMemberStatus;
+import io.getbit.gim.webrtc.enums.GroupCallMode;
+import io.getbit.gim.webrtc.enums.GroupCallRoomStatus;
+import io.getbit.gim.webrtc.session.WebRtcSessionManager;
+import io.getbit.gim.webrtc.sfu.SfuAdapter;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -50,6 +57,7 @@ public class GroupCallSessionManager {
     /**
      * SFU 适配器（未配置 SFU 时为 null，此时仅支持 Mesh 模式）
      */
+    @Getter
     private final SfuAdapter sfuAdapter;
 
     /**
@@ -63,6 +71,7 @@ public class GroupCallSessionManager {
         return t;
     });
 
+    @Setter
     private volatile GroupCallListener listener;
 
     public GroupCallSessionManager(GroupCallConfig config) {
@@ -78,10 +87,6 @@ public class GroupCallSessionManager {
         this.config = config != null ? config : new GroupCallConfig();
         this.sfuAdapter = sfuAdapter;
         this.oneToOneSessions = oneToOneSessions;
-    }
-
-    public void setListener(GroupCallListener listener) {
-        this.listener = listener;
     }
 
     // ====================== 房间生命周期 ======================
@@ -328,10 +333,6 @@ public class GroupCallSessionManager {
             return true;
         }
         return oneToOneSessions != null && oneToOneSessions.isInCall(userId);
-    }
-
-    public SfuAdapter getSfuAdapter() {
-        return sfuAdapter;
     }
 
     public int getRoomCount() {
