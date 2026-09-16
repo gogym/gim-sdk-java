@@ -36,13 +36,4 @@ public interface SfuAdapter {
      * @return 接入凭证（token + 连接地址），客户端用它连接 SFU 收发媒体流
      */
     SfuToken issueToken(String roomId, String userId);
-
-    /**
-     * SFU 接入凭证
-     *
-     * @param token 接入 token（如 LiveKit JWT access token）
-     * @param url   SFU 连接地址（如 LiveKit 的 wss:// 地址）
-     */
-    record SfuToken(String token, String url) {
-    }
 }

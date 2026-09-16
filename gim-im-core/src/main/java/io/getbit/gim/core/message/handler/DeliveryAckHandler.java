@@ -7,6 +7,7 @@ import io.getbit.gim.protocol.codec.ImProto;
 import io.getbit.gim.protocol.codec.PacketCodec;
 import io.netty.channel.Channel;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 /**
@@ -17,6 +18,7 @@ import java.util.List;
  *
  * @author gogym
  */
+@Slf4j
 public class DeliveryAckHandler extends BaseHandler {
 
     private final MessageAckTracker ackTracker;
@@ -40,10 +42,10 @@ public class DeliveryAckHandler extends BaseHandler {
 
             // 取消 ACK 追踪
             boolean wasPending = ackTracker.acknowledge(msgId);
-            logger.debug("送达ACK处理: msgId={}, userId={}, wasPending={}", msgId, userId, wasPending);
+            log.debug("送达ACK处理: msgId={}, userId={}, wasPending={}", msgId, userId, wasPending);
 
         } catch (Exception e) {
-            logger.error("送达ACK处理失败, userId={}", userId, e);
+            log.error("送达ACK处理失败, userId={}", userId, e);
         }
     }
 }

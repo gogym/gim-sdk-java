@@ -16,8 +16,8 @@
 
 | 组件 | 版本 |
 |------|------|
-| Java | 17 |
-| Spring Boot | 3.5.3 |
+| Java | 11+（SDK 编译目标 11，example 演示工程使用 17） |
+| Spring Boot | 2.7.18（starter 自动装配；Boot 3.x 要求 JDK 17+） |
 | Netty | 4.1.117.Final |
 | Protobuf | 4.32.0 |
 | Caffeine | 3.1.8 |

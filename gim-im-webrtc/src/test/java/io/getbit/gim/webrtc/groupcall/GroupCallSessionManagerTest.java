@@ -5,6 +5,7 @@ import io.getbit.gim.webrtc.enums.GroupCallMode;
 import io.getbit.gim.webrtc.enums.GroupCallRoomStatus;
 import io.getbit.gim.webrtc.session.WebRtcSessionManager;
 import io.getbit.gim.webrtc.sfu.SfuAdapter;
+import io.getbit.gim.webrtc.sfu.SfuToken;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

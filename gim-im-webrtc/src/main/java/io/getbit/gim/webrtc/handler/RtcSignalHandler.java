@@ -8,11 +8,12 @@ import io.getbit.gim.core.message.handler.BaseHandler;
 import io.getbit.gim.protocol.codec.Cmd;
 import io.getbit.gim.protocol.codec.ImProto;
 import io.getbit.gim.protocol.codec.PacketCodec;
+import io.getbit.gim.webrtc.dto.TurnCredentialsDto;
+import io.getbit.gim.webrtc.enums.RtcSignalType;
 import io.getbit.gim.webrtc.sfu.TurnCredentialService;
 import io.getbit.gim.webrtc.util.RtcSignalValidator;
 import io.netty.channel.Channel;
-
-import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * RtcSignalHandler.java
@@ -23,23 +24,20 @@ import java.util.Map;
  *
  * @author gogym
  */
+@Slf4j
 public class RtcSignalHandler extends BaseHandler {
 
-    /** 通话建立类信令类型（与客户端 RtcSignalType 保持一致，参见 RtcSignalValidator） */
-    private static final int SIGNAL_CALL_REQUEST = 4;
-    private static final int SIGNAL_CALL_ACCEPT = 5;
-
-    /** TURN 凭证在 payload 中的字段名（客户端 parseTurnFromPayload 按此解析） */
+    /**
+     * TURN 凭证在 payload 中的字段名（客户端 parseTurnFromPayload 按此解析）
+     */
     private static final String TURN_PAYLOAD_KEY = "turn";
 
     private static final Gson GSON = new Gson();
 
-    /** TURN 凭证生成服务（可能未装配，为 null 时退化为纯转发） */
+    /**
+     * TURN 凭证生成服务（可能未装配，为 null 时退化为纯转发）
+     */
     private final TurnCredentialService turnCredentialService;
-
-    public RtcSignalHandler(IMServerFacade facade) {
-        this(facade, null);
-    }
 
     public RtcSignalHandler(IMServerFacade facade, TurnCredentialService turnCredentialService) {
         super(facade);
@@ -58,7 +56,7 @@ public class RtcSignalHandler extends BaseHandler {
             String targetId = signal.getReceiverId();
 
             if (targetId.isEmpty()) {
-                logger.warn("RTC信令缺少目标用户: signalType={}, from={}", signal.getSignalType(), userId);
+                log.warn("RTC信令缺少目标用户: signalType={}, from={}", signal.getSignalType(), userId);
                 return;
             }
 
@@ -70,8 +68,8 @@ public class RtcSignalHandler extends BaseHandler {
             // 通话建立信令（callRequest/callAccept）转发前注入 TURN 临时凭证，
             // 被叫从 callRequest、主叫从 callAccept 各自解析凭证构建 ICE 服务器
             if (turnCredentialService != null
-                    && (signal.getSignalType() == SIGNAL_CALL_REQUEST
-                        || signal.getSignalType() == SIGNAL_CALL_ACCEPT)) {
+                    && (signal.getSignalType() == RtcSignalType.CALL_REQUEST.getCode()
+                    || signal.getSignalType() == RtcSignalType.CALL_ACCEPT.getCode())) {
                 signal = injectTurnCredential(signal);
             }
 
@@ -80,15 +78,15 @@ public class RtcSignalHandler extends BaseHandler {
             boolean delivered = routeToUser(targetId, fwdPacket);
 
             if (!delivered) {
-                logger.debug("RTC信令目标用户离线: signalType={}, to={}", signal.getSignalType(), targetId);
+                log.debug("RTC信令目标用户离线: signalType={}, to={}", signal.getSignalType(), targetId);
                 fireOfflineMessage(fwdPacket, targetId, "OFFLINE");
             }
 
-            logger.debug("RTC信令转发: signalType={}, from={}, to={}, delivered={}",
+            log.debug("RTC信令转发: signalType={}, from={}, to={}, delivered={}",
                     signal.getSignalType(), userId, targetId, delivered);
 
         } catch (Exception e) {
-            logger.error("RTC信令处理失败, userId={}", userId, e);
+            log.error("RTC信令处理失败, userId={}", userId, e);
         }
     }
 
@@ -101,9 +99,9 @@ public class RtcSignalHandler extends BaseHandler {
      */
     private ImProto.RtcSignal injectTurnCredential(ImProto.RtcSignal signal) {
         try {
-            Map<String, Object> turnInfo = turnCredentialService.generateTurnInfo();
+            TurnCredentialsDto turnInfo = turnCredentialService.generateTurnInfo();
             if (turnInfo == null) {
-                logger.warn("TURN凭证生成失败, 保持原payload转发: signalType={}", signal.getSignalType());
+                log.warn("TURN凭证生成失败, 保持原payload转发: signalType={}", signal.getSignalType());
                 return signal;
             }
             String originPayload = signal.getPayload();
@@ -111,11 +109,11 @@ public class RtcSignalHandler extends BaseHandler {
                     ? new JsonObject()
                     : JsonParser.parseString(originPayload).getAsJsonObject();
             payload.add(TURN_PAYLOAD_KEY, GSON.toJsonTree(turnInfo));
-            logger.debug("TURN凭证已注入: signalType={}, turnUrl={}",
-                    signal.getSignalType(), turnInfo.get("turnUrl"));
+            log.debug("TURN凭证已注入: signalType={}, turnUrl={}",
+                    signal.getSignalType(), turnInfo.getTurnUrl());
             return signal.toBuilder().setPayload(GSON.toJson(payload)).build();
         } catch (Exception e) {
-            logger.warn("TURN凭证注入失败, 保持原payload转发: signalType={}, error={}",
+            log.warn("TURN凭证注入失败, 保持原payload转发: signalType={}, error={}",
                     signal.getSignalType(), e.getMessage());
             return signal;
         }

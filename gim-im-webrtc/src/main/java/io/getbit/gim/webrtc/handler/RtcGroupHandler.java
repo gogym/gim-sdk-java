@@ -6,10 +6,12 @@ import io.getbit.gim.core.spi.ImGroupMemberProvider;
 import io.getbit.gim.protocol.codec.Cmd;
 import io.getbit.gim.protocol.codec.ImProto;
 import io.getbit.gim.protocol.codec.PacketCodec;
+import io.getbit.gim.webrtc.enums.RtcSignalType;
 import io.getbit.gim.webrtc.groupcall.GroupCallService;
 import io.getbit.gim.webrtc.util.RtcSignalValidator;
 import io.netty.channel.Channel;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 /**
@@ -30,6 +32,7 @@ import java.util.List;
  *
  * @author gogym
  */
+@Slf4j
 public class RtcGroupHandler extends BaseHandler {
 
     private final ImGroupMemberProvider groupMemberProvider;
@@ -64,18 +67,18 @@ public class RtcGroupHandler extends BaseHandler {
             String groupId = rtcGroup.getGroupId();
 
             // 群通话生命周期信令（signalType 9~16）委派给 GroupCallService
-            if (rtcGroup.getSignalType() >= GroupCallService.SIGNAL_GROUP_CALL_REQUEST) {
+            if (rtcGroup.getSignalType() >= RtcSignalType.GROUP_CALL_REQUEST.getCode()) {
                 if (groupCallService != null) {
                     groupCallService.handle(packet, channel, userId, rtcGroup);
                 } else {
-                    logger.debug("群通话未启用，忽略生命周期信令: signalType={}, userId={}",
+                    log.debug("群通话未启用，忽略生命周期信令: signalType={}, userId={}",
                             rtcGroup.getSignalType(), userId);
                 }
                 return;
             }
 
             if (groupId.isEmpty()) {
-                logger.warn("RTC群聊信令缺少群组ID: signalType={}, from={}", rtcGroup.getSignalType(), userId);
+                log.warn("RTC群聊信令缺少群组ID: signalType={}, from={}", rtcGroup.getSignalType(), userId);
                 return;
             }
 
@@ -87,7 +90,7 @@ public class RtcGroupHandler extends BaseHandler {
             // 获取群成员列表
             List<String> memberUserIds = groupMemberProvider.getGroupMemberUserIds(groupId);
             if (memberUserIds == null || memberUserIds.isEmpty()) {
-                logger.warn("RTC群聊信令: 群 {} 无活跃成员", groupId);
+                log.warn("RTC群聊信令: 群 {} 无活跃成员", groupId);
                 return;
             }
 
@@ -119,11 +122,11 @@ public class RtcGroupHandler extends BaseHandler {
                 }
             }
 
-            logger.debug("RTC群聊信令路由完成: signalType={}, from={}, group={}, members={}, delivered={}, offline={}",
+            log.debug("RTC群聊信令路由完成: signalType={}, from={}, group={}, members={}, delivered={}, offline={}",
                     rtcGroup.getSignalType(), userId, groupId, memberUserIds.size(), deliveredCount, offlineCount);
 
         } catch (Exception e) {
-            logger.error("RTC群聊信令处理失败, userId={}", userId, e);
+            log.error("RTC群聊信令处理失败, userId={}", userId, e);
         }
     }
 }

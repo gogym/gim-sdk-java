@@ -7,6 +7,7 @@ import io.getbit.gim.protocol.codec.ImProto;
 import io.getbit.gim.protocol.codec.PacketCodec;
 import io.netty.channel.Channel;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 /**
@@ -22,6 +23,7 @@ import java.util.List;
  *
  * @author gogym
  */
+@Slf4j
 public class ReadReceiptHandler extends BaseHandler {
 
     public ReadReceiptHandler(IMServerFacade facade) {
@@ -40,7 +42,7 @@ public class ReadReceiptHandler extends BaseHandler {
             String conversationId = readReceipt.getConversationId();
             String lastReadMsgId = readReceipt.getLastReadMsgId();
 
-            logger.debug("已读回执: userId={}, conversation={}, lastReadMsg={}",
+            log.debug("已读回执: userId={}, conversation={}, lastReadMsg={}",
                     userId, conversationId, lastReadMsgId);
 
             // 单聊：从 conversationId 解析对方 userId，转发已读回执给对方
@@ -55,7 +57,7 @@ public class ReadReceiptHandler extends BaseHandler {
                 boolean delivered = routeToUser(otherUserId, fwdPacket);
 
                 if (!delivered) {
-                    logger.debug("已读回执目标用户离线: to={}", otherUserId);
+                    log.debug("已读回执目标用户离线: to={}", otherUserId);
                 }
             } else {
                 // 无法解析对方ID（可能是群聊会话或格式不匹配）
@@ -64,13 +66,13 @@ public class ReadReceiptHandler extends BaseHandler {
                     try {
                         listener.onReadReceipt(packet);
                     } catch (Exception e) {
-                        logger.error("已读回执回调异常: userId={}", userId, e);
+                        log.error("已读回执回调异常: userId={}", userId, e);
                     }
                 }
             }
 
         } catch (Exception e) {
-            logger.error("已读回执处理失败, userId={}", userId, e);
+            log.error("已读回执处理失败, userId={}", userId, e);
         }
     }
 }

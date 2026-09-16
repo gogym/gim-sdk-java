@@ -4,17 +4,16 @@ import io.getbit.gim.core.config.properties.GimProperties;
 import io.getbit.gim.core.connection.auth.ConnectionAuthHandler;
 import io.getbit.gim.core.connection.channel.ChannelManager;
 import io.getbit.gim.core.connection.server.NettyServer;
+import io.getbit.gim.core.message.ack.MessageAckTracker;
+import io.getbit.gim.core.message.ack.ResendCallback;
+import io.getbit.gim.core.message.handler.*;
 import io.getbit.gim.core.notify.friend.FriendNotifyService;
 import io.getbit.gim.core.notify.group.GroupNotifyService;
-import io.getbit.gim.core.message.ack.MessageAckTracker;
-import io.getbit.gim.core.message.handler.*;
 import io.getbit.gim.core.routing.ClusterMessageRouter;
 import io.getbit.gim.core.routing.UserRouteService;
 import io.getbit.gim.core.spi.*;
 import io.netty.channel.Channel;
-import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,7 +44,7 @@ import java.util.function.Function;
  *     .build();
  *
  * // 方式2：获取完整启动上下文（推荐）
- * GimBootstrap.StartContext ctx = GimBootstrap.builder()
+ * StartContext ctx = GimBootstrap.builder()
  *     .config(config)
  *     .tokenVerifier(myTokenVerifier)
  *     .redisAdapter(myRedisAdapter)
@@ -60,9 +59,8 @@ import java.util.function.Function;
  *
  * @author gogym
  */
+@Slf4j
 public class GimBootstrap {
-
-    private static final Logger logger = LoggerFactory.getLogger(GimBootstrap.class);
 
     private GimBootstrap() {
     }
@@ -197,7 +195,7 @@ public class GimBootstrap {
                     config, channelManager, redisAdapter, subscriber, listeners);
 
             // 自动重发回调：本地投递 → 集群路由
-            MessageAckTracker.ResendCallback resendCallback = (receiverId, packet) -> {
+            ResendCallback resendCallback = (receiverId, packet) -> {
                 var channels = channelManager.getChannels(receiverId);
                 if (!channels.isEmpty()) {
                     for (var entry : channels.entrySet()) {
@@ -263,7 +261,7 @@ public class GimBootstrap {
             // 注入 MessageAckTracker 到健康指标，用于监控待确认消息数
             facade.getHealthIndicator().setMessageAckTracker(messageAckTracker);
 
-            logger.info("GIM SDK 组件组装完成, serverId={}, cluster={}, friend={}, ackTimeout={}s, autoRewrite={}",
+            log.info("GIM SDK 组件组装完成, serverId={}, cluster={}, friend={}, ackTimeout={}s, autoRewrite={}",
                     config.getServerId(), config.isEnableCluster(),
                     friendNotifyService != null ? "enabled" : "disabled",
                     config.getMsg().getAckTimeoutSeconds(), autoRewrite);
@@ -275,78 +273,6 @@ public class GimBootstrap {
             if (obj == null) {
                 throw new IllegalArgumentException("GimBootstrap: '" + name + "' is required");
             }
-        }
-    }
-
-    /**
-     * 启动上下文：包含 facade 和 nettyServer，统一管理启停
-     */
-    public static class StartContext {
-        @Getter
-        private final IMServerFacade facade;
-        @Getter
-        private final NettyServer nettyServer;
-        @Getter
-        private final ClusterMessageRouter clusterRouter;
-
-        public StartContext(IMServerFacade facade, NettyServer nettyServer, ClusterMessageRouter clusterRouter) {
-            this.facade = facade;
-            this.nettyServer = nettyServer;
-            this.clusterRouter = clusterRouter;
-        }
-
-        /**
-         * 启动 IM 服务器（包括集群路由订阅和 Netty 监听）
-         */
-        public void start() {
-            clusterRouter.start();
-            nettyServer.start();
-        }
-
-        /**
-         * 停止 IM 服务器
-         */
-        public void stop() {
-            nettyServer.stop();
-            clusterRouter.stop();
-        }
-    }
-
-    // ==================== 内部占位实现 ====================
-
-    /**
-     * 内部组装结果
-     */
-    private static class Assembly {
-        private final IMServerFacade facade;
-        private final ClusterMessageRouter clusterRouter;
-
-        private Assembly(IMServerFacade facade, ClusterMessageRouter clusterRouter) {
-            this.facade = facade;
-            this.clusterRouter = clusterRouter;
-        }
-    }
-
-
-    private static class NoOpRedisSubscriber implements ImRedisSubscriber {
-        @Override
-        public void subscribe(String channel, java.util.function.Consumer<String> callback) {
-        }
-
-        @Override
-        public void unsubscribe() {
-        }
-
-        @Override
-        public boolean isSubscribed() {
-            return false;
-        }
-    }
-
-    private static class NoOpGroupMemberProvider implements ImGroupMemberProvider {
-        @Override
-        public List<String> getGroupMemberUserIds(String groupId) {
-            return Collections.emptyList();
         }
     }
 }

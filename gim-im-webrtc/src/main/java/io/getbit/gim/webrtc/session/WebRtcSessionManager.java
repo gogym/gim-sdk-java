@@ -18,7 +18,8 @@ public class WebRtcSessionManager {
     private final Cache<String, WebRtcSession> sessionMap = Caffeine.newBuilder()
             .expireAfterWrite(2, TimeUnit.HOURS).maximumSize(10_000)
             .removalListener((key, value, cause) -> {
-                if (value instanceof WebRtcSession session) {
+                if (value instanceof WebRtcSession) {
+                    WebRtcSession session = (WebRtcSession) value;
                     userCallMap.invalidate(session.getCallerId());
                     userCallMap.invalidate(session.getCalleeId());
                 }
@@ -30,7 +31,9 @@ public class WebRtcSessionManager {
 
     public boolean createSession(String callId, String callerId, String calleeId,
                                   String callType, Channel callerChannel, Channel calleeChannel) {
-        if (userCallMap.getIfPresent(callerId) != null || userCallMap.getIfPresent(calleeId) != null) return false;
+        if (userCallMap.getIfPresent(callerId) != null || userCallMap.getIfPresent(calleeId) != null) {
+            return false;
+        }
         WebRtcSession session = new WebRtcSession();
         session.setCallId(callId); session.setCallerId(callerId); session.setCalleeId(calleeId);
         session.setCallType(callType); session.setCallerChannel(callerChannel); session.setCalleeChannel(calleeChannel);
@@ -42,7 +45,9 @@ public class WebRtcSessionManager {
 
     public boolean acceptSession(String callId, Channel calleeChannel) {
         WebRtcSession session = sessionMap.getIfPresent(callId);
-        if (session == null || session.getStatus() != WebRtcSessionStatus.CALLING) return false;
+        if (session == null || session.getStatus() != WebRtcSessionStatus.CALLING) {
+            return false;
+        }
         session.setCalleeChannel(calleeChannel); session.setStatus(WebRtcSessionStatus.CONNECTING);
         userCallMap.put(session.getCalleeId(), callId); cancelTimeoutTask(callId);
         return true;
@@ -50,14 +55,18 @@ public class WebRtcSessionManager {
 
     public boolean startTalking(String callId) {
         WebRtcSession session = sessionMap.getIfPresent(callId);
-        if (session == null) return false;
+        if (session == null) {
+            return false;
+        }
         session.setStatus(WebRtcSessionStatus.TALKING); session.setConnectTime(System.currentTimeMillis());
         return true;
     }
 
     public WebRtcSession endSession(String callId) {
         WebRtcSession session = sessionMap.getIfPresent(callId);
-        if (session == null) return null;
+        if (session == null) {
+            return null;
+        }
         sessionMap.invalidate(callId); cancelTimeoutTask(callId);
         userCallMap.invalidate(session.getCallerId()); userCallMap.invalidate(session.getCalleeId());
         session.setStatus(WebRtcSessionStatus.ENDED); session.setEndTime(System.currentTimeMillis());
@@ -79,12 +88,16 @@ public class WebRtcSessionManager {
     }
     public Channel getPeerChannel(String callId, String userId) {
         WebRtcSession s = sessionMap.getIfPresent(callId);
-        if (s == null) return null;
+        if (s == null) {
+            return null;
+        }
         return userId.equals(s.getCallerId()) ? s.getCalleeChannel() : userId.equals(s.getCalleeId()) ? s.getCallerChannel() : null;
     }
     public String getPeerUserId(String callId, String userId) {
         WebRtcSession s = sessionMap.getIfPresent(callId);
-        if (s == null) return null;
+        if (s == null) {
+            return null;
+        }
         return userId.equals(s.getCallerId()) ? s.getCalleeId() : userId.equals(s.getCalleeId()) ? s.getCallerId() : null;
     }
     public Channel[] getAllChannels(String callId) {

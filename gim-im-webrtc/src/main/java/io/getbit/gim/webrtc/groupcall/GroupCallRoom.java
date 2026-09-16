@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 /**
  * GroupCallRoom.java
- *
+ * <p>
  * 群通话房间
  * 由 GroupCallSessionManager 创建和管理，承载房间元信息与成员状态
  *

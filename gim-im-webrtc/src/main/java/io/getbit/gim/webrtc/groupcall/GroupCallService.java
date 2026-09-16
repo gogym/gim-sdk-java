@@ -10,7 +10,9 @@ import io.getbit.gim.protocol.codec.PacketCodec;
 import io.getbit.gim.webrtc.enums.GroupCallMemberStatus;
 import io.getbit.gim.webrtc.enums.GroupCallMode;
 import io.getbit.gim.webrtc.enums.GroupCallRoomStatus;
+import io.getbit.gim.webrtc.enums.RtcSignalType;
 import io.getbit.gim.webrtc.sfu.SfuAdapter;
+import io.getbit.gim.webrtc.sfu.SfuToken;
 import io.getbit.gim.webrtc.sfu.TurnCredentialService;
 import io.getbit.gim.webrtc.dto.GroupCallInviteDto;
 import io.getbit.gim.webrtc.dto.GroupCallParticipantDto;
@@ -21,6 +23,7 @@ import io.getbit.gim.webrtc.dto.WebRtcRejectDto;
 import io.getbit.gim.webrtc.util.RtcSignalValidator;
 import io.netty.channel.Channel;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,18 +45,8 @@ import java.util.List;
  *
  * @author gogym
  */
+@Slf4j
 public class GroupCallService extends BaseHandler implements GroupCallListener {
-
-    // ==================== signalType 枚举（群通话生命周期，与 ImProto.proto 注释保持一致） ====================
-
-    public static final int SIGNAL_GROUP_CALL_REQUEST = 9;
-    public static final int SIGNAL_GROUP_CALL_INVITE = 10;
-    public static final int SIGNAL_GROUP_CALL_JOIN = 11;
-    public static final int SIGNAL_GROUP_CALL_REJECT = 12;
-    public static final int SIGNAL_GROUP_CALL_LEAVE = 13;
-    public static final int SIGNAL_GROUP_CALL_END = 14;
-    public static final int SIGNAL_PARTICIPANT_NOTIFY = 15;
-    public static final int SIGNAL_ROOM_STATE = 16;
 
     private static final Gson GSON = new Gson();
 
@@ -88,7 +81,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
             ImProto.RtcGroup signal = PacketCodec.parseRtcGroup(packet);
             handle(packet, channel, userId, signal);
         } catch (Exception e) {
-            logger.error("群通话信令解析失败, userId={}", userId, e);
+            log.error("群通话信令解析失败, userId={}", userId, e);
         }
     }
 
@@ -98,18 +91,38 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
     public void handle(ImProto.Packet packet, Channel channel, String userId, ImProto.RtcGroup signal) {
         try {
             int signalType = signal.getSignalType();
-            switch (signalType) {
-                case SIGNAL_GROUP_CALL_REQUEST -> handleGroupCallRequest(signal, channel, userId);
-                case SIGNAL_GROUP_CALL_JOIN -> handleJoin(signal, channel, userId);
-                case SIGNAL_GROUP_CALL_REJECT -> handleReject(signal, userId);
-                case SIGNAL_GROUP_CALL_LEAVE -> handleLeave(signal, userId);
-                case SIGNAL_GROUP_CALL_END -> handleEnd(signal, userId);
-                case SIGNAL_PARTICIPANT_NOTIFY, SIGNAL_ROOM_STATE ->
-                        logger.warn("群通话信令 {} 为服务端下发信令，忽略客户端上行, userId={}", signalType, userId);
-                default -> logger.warn("群通话未知信令类型: signalType={}, userId={}", signalType, userId);
+            RtcSignalType type = RtcSignalType.fromCode(signalType);
+            if (type == null) {
+                log.warn("群通话未知信令类型: signalType={}, userId={}", signalType, userId);
+                return;
+            }
+            switch (type) {
+                case GROUP_CALL_REQUEST:
+                    handleGroupCallRequest(signal, channel, userId);
+                    break;
+                case GROUP_CALL_JOIN:
+                    handleJoin(signal, channel, userId);
+                    break;
+                case GROUP_CALL_REJECT:
+                    handleReject(signal, userId);
+                    break;
+                case GROUP_CALL_LEAVE:
+                    handleLeave(signal, userId);
+                    break;
+                case GROUP_CALL_END:
+                    handleEnd(signal, userId);
+                    break;
+                case GROUP_CALL_INVITE:
+                case PARTICIPANT_NOTIFY:
+                case ROOM_STATE:
+                    log.warn("群通话信令 {} 为服务端下发信令，忽略客户端上行, userId={}", signalType, userId);
+                    break;
+                default:
+                    log.warn("群通话未知信令类型: signalType={}, userId={}", signalType, userId);
+                    break;
             }
         } catch (Exception e) {
-            logger.error("群通话信令处理失败, signalType={}, userId={}", signal.getSignalType(), userId, e);
+            log.error("群通话信令处理失败, signalType={}, userId={}", signal.getSignalType(), userId, e);
         }
     }
 
@@ -121,16 +134,16 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
     private void handleGroupCallRequest(ImProto.RtcGroup signal, Channel channel, String userId) {
         String groupId = signal.getGroupId();
         if (groupId.isEmpty()) {
-            logger.warn("群通话发起缺少群组ID: userId={}", userId);
+            log.warn("群通话发起缺少群组ID: userId={}", userId);
             return;
         }
-        if (!RtcSignalValidator.validateGroupLifecyclePayload(SIGNAL_GROUP_CALL_REQUEST, signal.getPayload(), userId)) {
+        if (!RtcSignalValidator.validateGroupLifecyclePayload(RtcSignalType.GROUP_CALL_REQUEST.getCode(), signal.getPayload(), userId)) {
             return;
         }
 
         // 发起人占用检查（含 1:1 通话互斥）
         if (sessionManager.isUserBusy(userId)) {
-            logger.warn("群通话发起失败: 用户通话占用中, userId={}", userId);
+            log.warn("群通话发起失败: 用户通话占用中, userId={}", userId);
             notifyUser(userId, buildParticipantSignal(null, "busy", userId, "in call", 0));
             return;
         }
@@ -138,7 +151,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
         GroupCallRequestDto request = GSON.fromJson(signal.getPayload(), GroupCallRequestDto.class);
         List<String> inviteeIds = resolveInviteeIds(groupId, userId, request);
         if (inviteeIds.isEmpty()) {
-            logger.warn("群通话发起失败: 群 {} 无可邀请成员, userId={}", groupId, userId);
+            log.warn("群通话发起失败: 群 {} 无可邀请成员, userId={}", groupId, userId);
             notifyUser(userId, buildParticipantSignal(null, "busy", userId, "no invitee", 0));
             return;
         }
@@ -147,7 +160,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
         GroupCallRoom room = sessionManager.createRoom(groupId, signal.getCallId(), userId,
                 request.getCallType(), inviteeIds, mode, channel);
         if (room == null) {
-            logger.warn("群通话发起失败: 该群已有进行中的通话, groupId={}, userId={}", groupId, userId);
+            log.warn("群通话发起失败: 该群已有进行中的通话, groupId={}, userId={}", groupId, userId);
             notifyUser(userId, buildParticipantSignal(null, "busy", userId, "group call in progress", 0));
             return;
         }
@@ -157,7 +170,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
             try {
                 sessionManager.getSfuAdapter().createRoom(room.getRoomId());
             } catch (Exception e) {
-                logger.error("SFU 房间创建失败, roomId={}", room.getRoomId(), e);
+                log.error("SFU 房间创建失败, roomId={}", room.getRoomId(), e);
             }
         }
 
@@ -170,7 +183,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
         invite.setGroupId(groupId);
         invite.setInitiatorId(userId);
         invite.setMode(mode == GroupCallMode.SFU ? "sfu" : "mesh");
-        ImProto.RtcGroup inviteSignal = buildServerSignal(SIGNAL_GROUP_CALL_INVITE, room, GSON.toJson(invite));
+        ImProto.RtcGroup inviteSignal = buildServerSignal(RtcSignalType.GROUP_CALL_INVITE.getCode(), room, GSON.toJson(invite));
 
         int offlineCount = 0;
         for (GroupCallMember member : room.getMembers().values()) {
@@ -183,7 +196,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
             }
         }
 
-        logger.info("群通话已发起: roomId={}, group={}, mode={}, initiator={}, invitees={}, offline={}",
+        log.info("群通话已发起: roomId={}, group={}, mode={}, initiator={}, invitees={}, offline={}",
                 room.getRoomId(), groupId, mode, userId, room.getMembers().size() - 1, offlineCount);
     }
 
@@ -193,13 +206,13 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
     private void handleJoin(ImProto.RtcGroup signal, Channel channel, String userId) {
         GroupCallRoom room = sessionManager.getRoom(signal.getRoomId());
         if (room == null) {
-            logger.warn("加入群通话失败: 房间不存在, roomId={}, userId={}", signal.getRoomId(), userId);
+            log.warn("加入群通话失败: 房间不存在, roomId={}, userId={}", signal.getRoomId(), userId);
             return;
         }
 
         GroupCallRoom joined = sessionManager.joinRoom(room.getRoomId(), userId, channel);
         if (joined == null) {
-            logger.warn("加入群通话失败: roomId={}, userId={}", room.getRoomId(), userId);
+            log.warn("加入群通话失败: roomId={}, userId={}", room.getRoomId(), userId);
             return;
         }
 
@@ -209,7 +222,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
         // 广播成员加入通知给其他在通话中的成员
         broadcastParticipant(joined, "join", userId, null, userId);
 
-        logger.info("群通话成员加入: roomId={}, userId={}, joined={}",
+        log.info("群通话成员加入: roomId={}, userId={}, joined={}",
                 joined.getRoomId(), userId, joined.getJoinedMemberIds());
     }
 
@@ -223,14 +236,14 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
         }
         GroupCallMember member = sessionManager.rejectInvite(room.getRoomId(), userId);
         if (member == null) {
-            logger.debug("拒绝群通话邀请无效: roomId={}, userId={}", room.getRoomId(), userId);
+            log.debug("拒绝群通话邀请无效: roomId={}, userId={}", room.getRoomId(), userId);
             return;
         }
 
         String reason = parseReason(signal.getPayload());
         broadcastParticipant(room, "reject", userId, reason, userId);
 
-        logger.info("群通话成员拒绝邀请: roomId={}, userId={}, reason={}", room.getRoomId(), userId, reason);
+        log.info("群通话成员拒绝邀请: roomId={}, userId={}, reason={}", room.getRoomId(), userId, reason);
     }
 
     /**
@@ -243,14 +256,14 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
         }
         GroupCallMember member = sessionManager.leaveRoom(room.getRoomId(), userId);
         if (member == null) {
-            logger.debug("退出群通话无效: roomId={}, userId={}", room.getRoomId(), userId);
+            log.debug("退出群通话无效: roomId={}, userId={}", room.getRoomId(), userId);
             return;
         }
 
         String reason = parseReason(signal.getPayload());
         broadcastParticipant(room, "leave", userId, reason, userId);
 
-        logger.info("群通话成员退出: roomId={}, userId={}, joinedLeft={}",
+        log.info("群通话成员退出: roomId={}, userId={}, joinedLeft={}",
                 room.getRoomId(), userId, room.getJoinedMemberIds());
     }
 
@@ -263,7 +276,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
             return;
         }
         if (!userId.equals(room.getInitiatorId())) {
-            logger.warn("仅发起人可结束群通话: roomId={}, operator={}, initiator={}",
+            log.warn("仅发起人可结束群通话: roomId={}, operator={}, initiator={}",
                     room.getRoomId(), userId, room.getInitiatorId());
             return;
         }
@@ -278,14 +291,14 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
             try {
                 sessionManager.getSfuAdapter().destroyRoom(ended.getRoomId());
             } catch (Exception e) {
-                logger.error("SFU 房间销毁失败, roomId={}", ended.getRoomId(), e);
+                log.error("SFU 房间销毁失败, roomId={}", ended.getRoomId(), e);
             }
         }
 
         // 广播通话结束给除发起人外的所有成员（含未响应/已退出的成员，便于客户端清理界面）
         broadcastParticipant(ended, "ended", userId, null, userId);
 
-        logger.info("群通话已结束: roomId={}, group={}, initiator={}", ended.getRoomId(), ended.getGroupId(), userId);
+        log.info("群通话已结束: roomId={}, group={}, initiator={}", ended.getRoomId(), ended.getGroupId(), userId);
     }
 
     // ====================== GroupCallListener 回调（管理器内部事件 → 广播） ======================
@@ -344,7 +357,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
             dto.setMemberCount(room.getJoinedMemberIds().size());
             dto.setMembers(toMemberInfos(room));
         }
-        return buildServerSignal(SIGNAL_PARTICIPANT_NOTIFY, room, GSON.toJson(dto));
+        return buildServerSignal(RtcSignalType.PARTICIPANT_NOTIFY.getCode(), room, GSON.toJson(dto));
     }
 
     /**
@@ -392,15 +405,15 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
         if (room.getMode() == GroupCallMode.SFU) {
             SfuAdapter sfu = sessionManager.getSfuAdapter();
             if (sfu != null) {
-                SfuAdapter.SfuToken token = sfu.issueToken(room.getRoomId(), toUserId);
-                dto.setSfuToken(token.token());
-                dto.setSfuUrl(token.url());
+                SfuToken token = sfu.issueToken(room.getRoomId(), toUserId);
+                dto.setSfuToken(token.getToken());
+                dto.setSfuUrl(token.getUrl());
             }
         } else if (turnCredentialService != null) {
             dto.setTurnInfo(turnCredentialService.generateTurnInfo());
         }
 
-        notifyUser(toUserId, buildServerSignal(SIGNAL_ROOM_STATE, room, GSON.toJson(dto)));
+        notifyUser(toUserId, buildServerSignal(RtcSignalType.ROOM_STATE.getCode(), room, GSON.toJson(dto)));
     }
 
     private List<GroupMemberInfoDto> toMemberInfos(GroupCallRoom room) {

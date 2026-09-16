@@ -4,9 +4,8 @@ import io.getbit.gim.core.spi.ImEventListener;
 import io.getbit.gim.protocol.codec.ImProto;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -22,9 +21,8 @@ import java.util.concurrent.TimeUnit;
  *
  * @author gogym
  */
+@Slf4j
 public class MessageAckTracker {
-
-    private static final Logger logger = LoggerFactory.getLogger(MessageAckTracker.class);
 
     /**
      * 最大追踪数量
@@ -67,20 +65,6 @@ public class MessageAckTracker {
      * 延迟重发调度器
      */
     private final ScheduledExecutorService scheduler;
-
-    /**
-     * 重发回调接口
-     */
-    @FunctionalInterface
-    public interface ResendCallback {
-        /**
-         * 重发消息
-         *
-         * @param receiverId 接收者ID
-         * @param packet     原始Packet
-         */
-        void resend(String receiverId, ImProto.Packet packet);
-    }
 
     public MessageAckTracker() {
         this(10, Collections.emptyList(), false, 3, 1000, null);
@@ -140,7 +124,7 @@ public class MessageAckTracker {
      */
     private void track(String msgId, String receiverId, ImProto.Packet packet, int retryCount) {
         pendingAcks.put(msgId, new AckInfo(receiverId, System.currentTimeMillis(), packet, retryCount));
-        logger.debug("注册ACK追踪: msgId={}, receiver={}, retry={}/{}", msgId, receiverId, retryCount, reWriteNum);
+        log.debug("注册ACK追踪: msgId={}, receiver={}, retry={}/{}", msgId, receiverId, retryCount, reWriteNum);
     }
 
     /**
@@ -153,7 +137,7 @@ public class MessageAckTracker {
         AckInfo removed = pendingAcks.getIfPresent(msgId);
         if (removed != null) {
             pendingAcks.invalidate(msgId);
-            logger.debug("消息ACK确认: msgId={}, receiver={}", msgId, removed.receiverId);
+            log.debug("消息ACK确认: msgId={}, receiver={}", msgId, removed.receiverId);
             return true;
         }
         return false;
@@ -173,7 +157,7 @@ public class MessageAckTracker {
         // 自动重发：未超过最大次数且有重发回调
         if (autoRewrite && resendCallback != null && info.retryCount < reWriteNum) {
             int nextRetry = info.retryCount + 1;
-            logger.info("消息ACK超时，准备第{}次重发: msgId={}, receiver={}", nextRetry, msgId, info.receiverId);
+            log.info("消息ACK超时，准备第{}次重发: msgId={}, receiver={}", nextRetry, msgId, info.receiverId);
 
             // 延迟重发
             scheduler.schedule(() -> {
@@ -181,14 +165,14 @@ public class MessageAckTracker {
                     resendCallback.resend(info.receiverId, info.packet);
                     // 重新追踪（增加重发计数）
                     track(msgId, info.receiverId, info.packet, nextRetry);
-                    logger.debug("消息重发完成: msgId={}, retry={}/{}", msgId, nextRetry, reWriteNum);
+                    log.debug("消息重发完成: msgId={}, retry={}/{}", msgId, nextRetry, reWriteNum);
                 } catch (Exception e) {
-                    logger.error("消息重发失败: msgId={}", msgId, e);
+                    log.error("消息重发失败: msgId={}", msgId, e);
                 }
             }, reWriteDelay, TimeUnit.MILLISECONDS);
         } else {
             // 重发次数用尽或未开启自动重发，触发离线回调
-            logger.warn("消息ACK超时{}: msgId={}, receiver={}",
+            log.warn("消息ACK超时{}: msgId={}, receiver={}",
                     autoRewrite ? "且重发次数用尽" : "", msgId, info.receiverId);
             fireAckTimeout(msgId, info);
         }
@@ -202,14 +186,8 @@ public class MessageAckTracker {
             try {
                 listener.onOfflineMessage(info.packet, info.receiverId, "ACK_TIMEOUT");
             } catch (Exception e) {
-                logger.error("ACK超时离线回调异常, msgId={}", msgId, e);
+                log.error("ACK超时离线回调异常, msgId={}", msgId, e);
             }
         }
-    }
-
-    /**
-     * ACK信息记录
-     */
-    private record AckInfo(String receiverId, long sentAt, ImProto.Packet packet, int retryCount) {
     }
 }

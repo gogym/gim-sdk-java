@@ -1,13 +1,13 @@
 package com.example.im;
 
 import io.getbit.gim.core.bootstrap.GimBootstrap;
+import io.getbit.gim.core.bootstrap.StartContext;
 import io.getbit.gim.core.config.properties.GimProperties;
 import io.getbit.gim.core.spi.*;
 import io.getbit.gim.protocol.codec.DeviceType;
 import io.getbit.gim.protocol.codec.ImProto;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -62,9 +62,9 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author gogym
  */
+@Slf4j
 public class ClusterExample {
 
-    private static final Logger log = LoggerFactory.getLogger(ClusterExample.class);
 
     // ==================== 方式 1：非 Spring 环境启动集群节点 ====================
 
@@ -76,7 +76,7 @@ public class ClusterExample {
      * @param serverId 节点唯一标识（如 "server-01"）
      * @param nettyPort Netty 监听端口
      */
-    public static GimBootstrap.StartContext startClusterNode(String serverId, int nettyPort) {
+    public static StartContext startClusterNode(String serverId, int nettyPort) {
         // 1. 集群配置
         GimProperties config = GimProperties.builder()
                 .serverId(serverId)             // 节点唯一 ID
@@ -87,7 +87,7 @@ public class ClusterExample {
                 .build();
 
         // 2. 构建并启动
-        GimBootstrap.StartContext ctx = GimBootstrap.builder()
+        StartContext ctx = GimBootstrap.builder()
                 .config(config)
                 .tokenVerifier(new ClusterTokenVerifier())
                 .redisAdapter(new ClusterRedisAdapter())       // 必须：路由缓存 + 消息发布
@@ -110,10 +110,10 @@ public class ClusterExample {
      */
     public static void startLocalCluster() throws InterruptedException {
         // 启动 Node-1
-        GimBootstrap.StartContext node1 = startClusterNode("server-01", 3333);
+        StartContext node1 = startClusterNode("server-01", 3333);
 
         // 启动 Node-2
-        GimBootstrap.StartContext node2 = startClusterNode("server-02", 3334);
+        StartContext node2 = startClusterNode("server-02", 3334);
 
         // 优雅关闭
         CountDownLatch latch = new CountDownLatch(1);
@@ -169,7 +169,9 @@ public class ClusterExample {
         @Override
         public String verifyAndExtractUserId(String token) {
             // TODO: 生产环境使用 JWT / OAuth2 等
-            if (token == null || token.isEmpty()) return null;
+            if (token == null || token.isEmpty()) {
+                return null;
+            }
             try {
                 Long.parseLong(token);
                 return token;

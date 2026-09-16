@@ -9,6 +9,7 @@ import io.getbit.gim.protocol.codec.ImProto;
 import io.getbit.gim.protocol.codec.PacketCodec;
 import io.netty.channel.Channel;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 /**
@@ -26,6 +27,7 @@ import java.util.List;
  *
  * @author gogym
  */
+@Slf4j
 public class SingleChatHandler extends BaseHandler {
 
     private final ImIdGenerator idGenerator;
@@ -55,7 +57,7 @@ public class SingleChatHandler extends BaseHandler {
 
             // 1. 好友关系校验（如果配置了 ImFriendProvider）
             if (friendProvider != null && !friendProvider.isFriend(userId, receiverId)) {
-                logger.info("单聊消息被拒绝(非好友): from={}, to={}", userId, receiverId);
+                log.info("单聊消息被拒绝(非好友): from={}, to={}", userId, receiverId);
                 ImProto.Packet failAck = PacketCodec.buildServerAckFail(
                         packet.getRequestId(), 403, packet.getSequence());
                 channel.writeAndFlush(failAck);
@@ -88,7 +90,7 @@ public class SingleChatHandler extends BaseHandler {
                 // 6. 追踪 ACK（等待接收方送达确认）
                 ackTracker.track(msgId, receiverId, fwdPacket);
             } else {
-                logger.debug("单聊消息接收方离线: msgId={}, receiver={}", msgId, receiverId);
+                log.debug("单聊消息接收方离线: msgId={}, receiver={}", msgId, receiverId);
                 // 触发离线消息回调
                 fireOfflineMessage(fwdPacket, receiverId, "OFFLINE");
             }
@@ -96,10 +98,10 @@ public class SingleChatHandler extends BaseHandler {
             // 7. 触发消息回调（业务层持久化）
             fireReceivedMessage(fwdPacket);
 
-            logger.debug("单聊消息处理完成: msgId={}, from={}, to={}", msgId, userId, receiverId);
+            log.debug("单聊消息处理完成: msgId={}, from={}, to={}", msgId, userId, receiverId);
 
         } catch (Exception e) {
-            logger.error("单聊消息处理失败, userId={}", userId, e);
+            log.error("单聊消息处理失败, userId={}", userId, e);
             ImProto.Packet failAck = PacketCodec.buildServerAckFail(
                     packet.getRequestId(), 500, packet.getSequence());
             channel.writeAndFlush(failAck);

@@ -1,14 +1,14 @@
 package com.example.im;
 
 import io.getbit.gim.core.bootstrap.GimBootstrap;
+import io.getbit.gim.core.bootstrap.StartContext;
 import io.getbit.gim.core.config.properties.GimProperties;
 import io.getbit.gim.core.bootstrap.IMServerFacade;
 import io.getbit.gim.core.spi.*;
 import io.getbit.gim.protocol.codec.DeviceType;
 import io.getbit.gim.protocol.codec.ImProto;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -43,9 +43,9 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author gogym
  */
+@Slf4j
 public class NonSpringExample {
 
-    private static final Logger log = LoggerFactory.getLogger(NonSpringExample.class);
 
     /**
      * 方式 1：使用 StartContext（推荐）
@@ -62,7 +62,7 @@ public class NonSpringExample {
                 .build();
 
         // 2. 通过 Builder 组装所有组件并启动
-        GimBootstrap.StartContext ctx = GimBootstrap.builder()
+        StartContext ctx = GimBootstrap.builder()
                 .config(config)
                 .tokenVerifier(new MyTokenVerifier())
                 .redisAdapter(new MyRedisAdapter())
@@ -110,7 +110,9 @@ public class NonSpringExample {
         @Override
         public String verifyAndExtractUserId(String token) {
             // TODO: 替换为 JWT 解析或其他安全方案
-            if (token == null || token.isEmpty()) return null;
+            if (token == null || token.isEmpty()) {
+                return null;
+            }
             try {
                 Long.parseLong(token);
                 return token;

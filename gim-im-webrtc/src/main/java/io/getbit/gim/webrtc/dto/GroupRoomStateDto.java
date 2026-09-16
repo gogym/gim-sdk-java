@@ -3,7 +3,6 @@ package io.getbit.gim.webrtc.dto;
 import lombok.Data;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * GroupRoomStateDto.java
@@ -68,7 +67,7 @@ public class GroupRoomStateDto {
     private String sfuUrl;
 
     /**
-     * TURN/STUN 凭据（仅 Mesh 模式，格式同 TurnCredentialService.generateTurnInfo）
+     * TURN/STUN 凭据（仅 Mesh 模式）
      */
-    private Map<String, Object> turnInfo;
+    private TurnCredentialsDto turnInfo;
 }

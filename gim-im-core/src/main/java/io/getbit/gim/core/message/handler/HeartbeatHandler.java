@@ -6,6 +6,7 @@ import io.getbit.gim.protocol.codec.ImProto;
 import io.getbit.gim.protocol.codec.PacketCodec;
 import io.netty.channel.Channel;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 /**
@@ -15,6 +16,7 @@ import java.util.List;
  *
  * @author gogym
  */
+@Slf4j
 public class HeartbeatHandler extends BaseHandler {
 
     public HeartbeatHandler(IMServerFacade facade) {
@@ -34,6 +36,6 @@ public class HeartbeatHandler extends BaseHandler {
         // 续期用户路由（集群模式下保持路由有效）
         userRouteService.renew(userId);
 
-        logger.debug("[{}] 心跳响应, userId={}", channel.id().asShortText(), userId);
+        log.debug("[{}] 心跳响应, userId={}", channel.id().asShortText(), userId);
     }
 }

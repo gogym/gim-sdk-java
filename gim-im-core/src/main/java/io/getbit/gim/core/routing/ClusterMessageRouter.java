@@ -9,9 +9,8 @@ import io.getbit.gim.protocol.codec.Cmd;
 import io.getbit.gim.protocol.codec.ImProto;
 import io.getbit.gim.protocol.codec.PacketCodec;
 import com.google.protobuf.util.JsonFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 /**
@@ -26,9 +25,9 @@ import java.util.List;
  *
  * @author gogym
  */
+@Slf4j
 public class ClusterMessageRouter {
 
-    private static final Logger logger = LoggerFactory.getLogger(ClusterMessageRouter.class);
 
     private static final String NODE_CHANNEL_PREFIX = "gim_node:";
 
@@ -58,7 +57,7 @@ public class ClusterMessageRouter {
      */
     public void start() {
         if (!config.isEnableCluster()) {
-            logger.info("非集群模式, 跳过集群消息路由启动");
+            log.info("非集群模式, 跳过集群消息路由启动");
             return;
         }
 
@@ -69,13 +68,13 @@ public class ClusterMessageRouter {
             try {
                 redisSubscriber.subscribe(channel, this::onClusterMessage);
             } catch (Exception e) {
-                logger.error("集群消息路由订阅失败", e);
+                log.error("集群消息路由订阅失败", e);
             }
         }, "cluster-route-subscriber");
         subscribeThread.setDaemon(true);
         subscribeThread.start();
 
-        logger.info("集群消息路由启动, 订阅 channel: {}", channel);
+        log.info("集群消息路由启动, 订阅 channel: {}", channel);
     }
 
     /**
@@ -87,7 +86,7 @@ public class ClusterMessageRouter {
             return;
         }
         redisSubscriber.unsubscribe();
-        logger.info("集群消息路由已停止");
+        log.info("集群消息路由已停止");
     }
 
     // ====================== 消息发送 ======================
@@ -97,7 +96,7 @@ public class ClusterMessageRouter {
      */
     public void routeToRemote(String targetServerId, ImProto.Packet packet, String receiverId) {
         if (!redisSubscriber.isSubscribed()) {
-            logger.warn("集群路由未就绪, 无法投递到节点: {}", targetServerId);
+            log.warn("集群路由未就绪, 无法投递到节点: {}", targetServerId);
             return;
         }
 
@@ -105,9 +104,9 @@ public class ClusterMessageRouter {
             String channel = NODE_CHANNEL_PREFIX + targetServerId;
             String json = JsonFormat.printer().print(packet);
             redisAdapter.publish(channel, json);
-            logger.debug("消息已路由到远程节点: {} -> receiver={}", targetServerId, receiverId);
+            log.debug("消息已路由到远程节点: {} -> receiver={}", targetServerId, receiverId);
         } catch (Exception e) {
-            logger.error("消息路由失败, targetServer={}, receiver={}", targetServerId, receiverId, e);
+            log.error("消息路由失败, targetServer={}, receiver={}", targetServerId, receiverId, e);
         }
     }
 
@@ -121,7 +120,7 @@ public class ClusterMessageRouter {
             ImProto.Packet packet = PacketCodec.packetFromJson(message);
             deliverLocally(packet);
         } catch (Exception e) {
-            logger.error("集群消息投递失败", e);
+            log.error("集群消息投递失败", e);
         }
     }
 
@@ -144,13 +143,13 @@ public class ClusterMessageRouter {
                             ch.writeAndFlush(fwdPacket);
                         }
                     });
-                    logger.debug("集群消息本地投递成功: receiver={}, devices={}", receiverId, targetChannels.size());
+                    log.debug("集群消息本地投递成功: receiver={}, devices={}", receiverId, targetChannels.size());
                 } else {
-                    logger.debug("集群消息本地投递: 用户不在线, receiver={}", receiverId);
+                    log.debug("集群消息本地投递: 用户不在线, receiver={}", receiverId);
                     fireDeliveryFailed(packet, receiverId, "OFFLINE");
                 }
             } catch (Exception e) {
-                logger.error("集群聊天消息本地投递失败", e);
+                log.error("集群聊天消息本地投递失败", e);
             }
 
         } else if (cmd == Cmd.RTC_SIGNAL) {
@@ -168,7 +167,7 @@ public class ClusterMessageRouter {
                     });
                 }
             } catch (Exception e) {
-                logger.error("集群RTC信令本地投递失败", e);
+                log.error("集群RTC信令本地投递失败", e);
             }
 
         } else {
@@ -196,7 +195,7 @@ public class ClusterMessageRouter {
             } else if (cmd == Cmd.ONLINE_STATUS_NOTIFY) {
                 // 在线状态通知：投递给所有本地用户（由上层广播）
                 // 这里无法确定具体目标，跳过
-                logger.debug("集群在线状态通知: userId={}", cmd);
+                log.debug("集群在线状态通知: userId={}", cmd);
                 return;
             } else if (cmd == Cmd.MSG_RECALL_NOTIFY) {
                 // 撤回通知：需要广播给群成员或单聊对方
@@ -212,20 +211,20 @@ public class ClusterMessageRouter {
                             ch.writeAndFlush(packet);
                         }
                     });
-                    logger.debug("集群通知本地投递成功: cmd={}, receiver={}", cmd, targetUserId);
+                    log.debug("集群通知本地投递成功: cmd={}, receiver={}", cmd, targetUserId);
                 } else {
                     // 用户不在线，触发离线通知回调
                     for (ImEventListener listener : eventListeners) {
                         try {
                             listener.onOfflineMessage(packet, targetUserId, "ROUTE_NOT_FOUND");
                         } catch (Exception e) {
-                            logger.error("集群通知离线回调异常: receiver={}", targetUserId, e);
+                            log.error("集群通知离线回调异常: receiver={}", targetUserId, e);
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            logger.error("集群通知本地投递失败: cmd={}", cmd, e);
+            log.error("集群通知本地投递失败: cmd={}", cmd, e);
         }
     }
 
@@ -235,7 +234,7 @@ public class ClusterMessageRouter {
                 try {
                     listener.onMessageDeliveryFailed(packet, receiverId, reason);
                 } catch (Exception e) {
-                    logger.error("事件监听器回调异常", e);
+                    log.error("事件监听器回调异常", e);
                 }
             }
         }

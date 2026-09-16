@@ -3,8 +3,7 @@ package com.example.im.spi;
 import io.getbit.gim.core.spi.ImEventListener;
 import io.getbit.gim.protocol.codec.DeviceType;
 import io.getbit.gim.protocol.codec.ImProto;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
@@ -21,9 +20,9 @@ import org.springframework.stereotype.Component;
  * </ul>
  */
 @Component
+@Slf4j
 public class ImEventListenerImpl implements ImEventListener {
 
-    private static final Logger log = LoggerFactory.getLogger(ImEventListenerImpl.class);
 
     @Override
     public void onUserOnline(String userId, DeviceType device, String serverId) {

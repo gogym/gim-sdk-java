@@ -1,8 +1,7 @@
 package com.example.im.spi;
 
 import io.getbit.gim.core.spi.ImRedisSubscriber;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.listener.ChannelTopic;
@@ -19,9 +18,9 @@ import java.util.function.Consumer;
  * 单机模式下 SDK 会自动使用 NoOp 实现，此处可保留但不影响运行。
  */
 @Component
+@Slf4j
 public class RedisSubscriberImpl implements ImRedisSubscriber {
 
-    private static final Logger log = LoggerFactory.getLogger(RedisSubscriberImpl.class);
 
     private final RedisConnectionFactory connectionFactory;
     private final AtomicBoolean subscribed = new AtomicBoolean(false);

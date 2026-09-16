@@ -6,9 +6,8 @@ import io.getbit.gim.core.routing.UserRouteService;
 import io.getbit.gim.core.spi.ImEventListener;
 import io.getbit.gim.protocol.codec.ImProto;
 import io.netty.channel.Channel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.Map;
 
@@ -22,9 +21,8 @@ import java.util.Map;
  *
  * @author gogym
  */
+@Slf4j
 public abstract class BaseNotifyService {
-
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     protected final ChannelManager channelManager;
     protected final UserRouteService userRouteService;
@@ -69,12 +67,12 @@ public abstract class BaseNotifyService {
         }
 
         // 3. 离线回调
-        logger.debug("通知目标用户离线且路由不可达: cmd={}, receiver={}", packet.getCmd(), targetUserId);
+        log.debug("通知目标用户离线且路由不可达: cmd={}, receiver={}", packet.getCmd(), targetUserId);
         for (ImEventListener listener : eventListeners) {
             try {
                 listener.onOfflineMessage(packet, targetUserId, "OFFLINE");
             } catch (Exception e) {
-                logger.error("离线通知回调异常: receiver={}", targetUserId, e);
+                log.error("离线通知回调异常: receiver={}", targetUserId, e);
             }
         }
     }

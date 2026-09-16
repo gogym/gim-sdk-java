@@ -8,9 +8,8 @@ import io.getbit.gim.core.spi.ImEventListener;
 import io.getbit.gim.protocol.codec.DeviceType;
 import io.getbit.gim.protocol.codec.ImProto;
 import io.netty.channel.Channel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -28,9 +27,8 @@ import java.util.Map;
  *
  * @author gogym
  */
+@Slf4j
 public abstract class BaseHandler {
-
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     protected final ChannelManager channelManager;
     protected final UserRouteService userRouteService;
@@ -151,8 +149,12 @@ public abstract class BaseHandler {
         if (idx > 0 && idx < conversationId.length() - 1) {
             String a = conversationId.substring(0, idx);
             String b = conversationId.substring(idx + 1);
-            if (a.equals(userId)) return b;
-            if (b.equals(userId)) return a;
+            if (a.equals(userId)) {
+                return b;
+            }
+            if (b.equals(userId)) {
+                return a;
+            }
         }
         return null;
     }
@@ -167,7 +169,7 @@ public abstract class BaseHandler {
             try {
                 listener.onReceivedMessage(packet);
             } catch (Exception e) {
-                logger.error("消息回调异常", e);
+                log.error("消息回调异常", e);
             }
         }
     }
@@ -180,7 +182,7 @@ public abstract class BaseHandler {
             try {
                 listener.onOfflineMessage(packet, receiverId, reason);
             } catch (Exception e) {
-                logger.error("离线消息回调异常, receiver={}", receiverId, e);
+                log.error("离线消息回调异常, receiver={}", receiverId, e);
             }
         }
     }

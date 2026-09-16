@@ -2,9 +2,8 @@ package io.getbit.gim.core.message.handler;
 
 import io.getbit.gim.protocol.codec.ImProto;
 import io.netty.channel.Channel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,9 +20,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author gogym
  */
+@Slf4j
 public class DefaultMessageDispatcher implements MessageDispatcher {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultMessageDispatcher.class);
 
     /** cmd → Handler 映射（线程安全，支持动态注册） */
     private final Map<Integer, BaseHandler> cmdHandlerMap = new ConcurrentHashMap<>();
@@ -37,7 +36,7 @@ public class DefaultMessageDispatcher implements MessageDispatcher {
     @Override
     public void registerHandler(BaseHandler handler) {
         cmdHandlerMap.put(handler.cmd(), handler);
-        logger.info("注册消息处理器: cmd={}, handler={}", handler.cmd(), handler.getClass().getSimpleName());
+        log.info("注册消息处理器: cmd={}, handler={}", handler.cmd(), handler.getClass().getSimpleName());
     }
 
     @Override
@@ -46,7 +45,7 @@ public class DefaultMessageDispatcher implements MessageDispatcher {
         if (handler != null) {
             handler.handle(packet, channel, userId);
         } else {
-            logger.warn("未找到处理器: cmd={}, userId={}", packet.getCmd(), userId);
+            log.warn("未找到处理器: cmd={}, userId={}", packet.getCmd(), userId);
         }
     }
 }

@@ -10,6 +10,7 @@ import io.getbit.gim.protocol.codec.Cmd;
 import io.getbit.gim.protocol.codec.ImProto;
 import io.getbit.gim.protocol.codec.PacketCodec;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 /**
@@ -25,6 +26,7 @@ import java.util.List;
  *
  * @author gogym
  */
+@Slf4j
 public class GroupNotifyService extends BaseNotifyService {
 
     private final ImGroupMemberProvider groupMemberProvider;
@@ -51,7 +53,7 @@ public class GroupNotifyService extends BaseNotifyService {
     public void notifyMemberChange(String groupId, int action, String userId, String operatorId) {
         ImProto.Packet packet = PacketCodec.buildGroupMemberNotifyPacket(groupId, action, userId, operatorId);
         broadcastToGroup(groupId, packet, userId);
-        logger.debug("群成员变更通知: group={}, action={}, userId={}", groupId, action, userId);
+        log.debug("群成员变更通知: group={}, action={}, userId={}", groupId, action, userId);
     }
 
     /**
@@ -91,7 +93,7 @@ public class GroupNotifyService extends BaseNotifyService {
         ImProto.Packet packet = PacketCodec.buildGroupNotifyPacket(
                 groupId, 1, operatorId, null, content);
         broadcastToGroup(groupId, packet, null);
-        logger.debug("群信息变更通知: group={}, operator={}", groupId, operatorId);
+        log.debug("群信息变更通知: group={}, operator={}", groupId, operatorId);
     }
 
     /**
@@ -101,7 +103,7 @@ public class GroupNotifyService extends BaseNotifyService {
         ImProto.Packet packet = PacketCodec.buildGroupNotifyPacket(
                 groupId, 2, operatorId, null, announcement);
         broadcastToGroup(groupId, packet, null);
-        logger.debug("群公告更新通知: group={}, operator={}", groupId, operatorId);
+        log.debug("群公告更新通知: group={}, operator={}", groupId, operatorId);
     }
 
     /**
@@ -111,7 +113,7 @@ public class GroupNotifyService extends BaseNotifyService {
         ImProto.Packet packet = PacketCodec.buildGroupNotifyPacket(
                 groupId, 3, operatorId, null, muteAll ? "1" : "0");
         broadcastToGroup(groupId, packet, null);
-        logger.debug("全员禁言通知: group={}, muteAll={}", groupId, muteAll);
+        log.debug("全员禁言通知: group={}, muteAll={}", groupId, muteAll);
     }
 
     /**
@@ -121,7 +123,7 @@ public class GroupNotifyService extends BaseNotifyService {
         ImProto.Packet packet = PacketCodec.buildGroupNotifyPacket(
                 groupId, 4, operatorId, targetUserId, muted ? "1" : "0");
         broadcastToGroup(groupId, packet, null);
-        logger.debug("成员禁言通知: group={}, target={}, muted={}", groupId, targetUserId, muted);
+        log.debug("成员禁言通知: group={}, target={}, muted={}", groupId, targetUserId, muted);
     }
 
     /**
@@ -131,7 +133,7 @@ public class GroupNotifyService extends BaseNotifyService {
         ImProto.Packet packet = PacketCodec.buildGroupNotifyPacket(
                 groupId, 5, operatorId, targetUserId, isAdmin ? "1" : "0");
         broadcastToGroup(groupId, packet, null);
-        logger.debug("角色变更通知: group={}, target={}, isAdmin={}", groupId, targetUserId, isAdmin);
+        log.debug("角色变更通知: group={}, target={}, isAdmin={}", groupId, targetUserId, isAdmin);
     }
 
     /**
@@ -141,7 +143,7 @@ public class GroupNotifyService extends BaseNotifyService {
         ImProto.Packet packet = PacketCodec.buildGroupNotifyPacket(
                 groupId, 6, oldOwnerId, newOwnerId, null);
         broadcastToGroup(groupId, packet, null);
-        logger.debug("转让群主通知: group={}, from={}, to={}", groupId, oldOwnerId, newOwnerId);
+        log.debug("转让群主通知: group={}, from={}, to={}", groupId, oldOwnerId, newOwnerId);
     }
 
     // ====================== 入群申请通知 ======================
@@ -163,7 +165,7 @@ public class GroupNotifyService extends BaseNotifyService {
                 deliverToUser(adminId, packet);
             }
         }
-        logger.debug("入群申请通知: group={}, applicant={}", groupId, applicantId);
+        log.debug("入群申请通知: group={}, applicant={}", groupId, applicantId);
     }
 
     /**
@@ -175,7 +177,7 @@ public class GroupNotifyService extends BaseNotifyService {
                 groupId, applicantId, operatorId,
                 approved ? 1 : 2, null);
         deliverToUser(applicantId, packet);
-        logger.debug("入群申请结果通知: group={}, applicant={}, approved={}", groupId, applicantId, approved);
+        log.debug("入群申请结果通知: group={}, applicant={}, approved={}", groupId, applicantId, approved);
     }
 
     // ====================== 广播 ======================
@@ -190,7 +192,7 @@ public class GroupNotifyService extends BaseNotifyService {
     public void broadcastToGroup(String groupId, ImProto.Packet packet, String excludeUserId) {
         List<String> memberUserIds = groupMemberProvider.getGroupMemberUserIds(groupId);
         if (memberUserIds == null || memberUserIds.isEmpty()) {
-            logger.warn("群通知广播: 群 {} 无成员", groupId);
+            log.warn("群通知广播: 群 {} 无成员", groupId);
             return;
         }
         for (String userId : memberUserIds) {

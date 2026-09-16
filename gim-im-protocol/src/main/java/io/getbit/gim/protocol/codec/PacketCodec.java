@@ -1,14 +1,13 @@
 package io.getbit.gim.protocol.codec;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 
 /**
  * PacketCodec.java
- *
- * @description: Packet 编解码工具类
+ * <p>
+ * Packet 编解码工具类
  * 提供 Packet 的创建、Body 解析等便捷方法
  */
 public class PacketCodec {
@@ -195,16 +194,20 @@ public class PacketCodec {
     // ====================== 通知消息构建 ======================
 
     public static ImProto.Packet buildFriendRequestNotifyPacket(String senderId, String receiverId,
-                                                                 String nickname, String avatar, String message,
-                                                                 String requestId, String logId) {
+                                                                String nickname, String avatar, String message,
+                                                                String requestId, String logId) {
         ImProto.FriendRequestNotify.Builder builder = ImProto.FriendRequestNotify.newBuilder()
                 .setSenderId(senderId)
                 .setReceiverId(receiverId)
                 .setMessage(message != null ? message : "")
                 .setRequestId(requestId != null ? requestId : "")
                 .setLogId(logId != null ? logId : "");
-        if (nickname != null) { builder.setNickname(nickname); }
-        if (avatar != null) { builder.setAvatar(avatar); }
+        if (nickname != null) {
+            builder.setNickname(nickname);
+        }
+        if (avatar != null) {
+            builder.setAvatar(avatar);
+        }
         return create(Cmd.FRIEND_REQUEST_NOTIFY, 0, builder.build());
     }
 
@@ -226,7 +229,7 @@ public class PacketCodec {
     }
 
     public static ImProto.Packet buildGroupMemberNotifyPacket(String groupId, int action,
-                                                               String userId, String operatorId) {
+                                                              String userId, String operatorId) {
         ImProto.GroupMemberNotify body = ImProto.GroupMemberNotify.newBuilder()
                 .setGroupId(groupId)
                 .setAction(action)
@@ -237,31 +240,39 @@ public class PacketCodec {
     }
 
     public static ImProto.Packet buildGroupNotifyPacket(String groupId, int action,
-                                                         String operatorId, String targetUserId,
-                                                         String content) {
+                                                        String operatorId, String targetUserId,
+                                                        String content) {
         ImProto.GroupNotify.Builder builder = ImProto.GroupNotify.newBuilder()
                 .setGroupId(groupId)
                 .setAction(action)
                 .setOperatorId(operatorId != null ? operatorId : "");
-        if (targetUserId != null) { builder.setTargetUserId(targetUserId); }
-        if (content != null) { builder.setContent(content); }
+        if (targetUserId != null) {
+            builder.setTargetUserId(targetUserId);
+        }
+        if (content != null) {
+            builder.setContent(content);
+        }
         return create(Cmd.GROUP_NOTIFY, 0, builder.build());
     }
 
     public static ImProto.Packet buildGroupJoinRequestNotifyPacket(String groupId, String userId,
-                                                                    String operatorId, int status,
-                                                                    String message) {
+                                                                   String operatorId, int status,
+                                                                   String message) {
         ImProto.GroupJoinRequestNotify.Builder builder = ImProto.GroupJoinRequestNotify.newBuilder()
                 .setGroupId(groupId)
                 .setUserId(userId != null ? userId : "")
                 .setStatus(status);
-        if (operatorId != null) { builder.setOperatorId(operatorId); }
-        if (message != null) { builder.setMessage(message); }
+        if (operatorId != null) {
+            builder.setOperatorId(operatorId);
+        }
+        if (message != null) {
+            builder.setMessage(message);
+        }
         return create(Cmd.GROUP_JOIN_REQUEST_NOTIFY, 0, builder.build());
     }
 
     public static ImProto.Packet buildMsgRecallNotifyPacket(String msgId, String conversationId,
-                                                              String operatorId, int chatType) {
+                                                            String operatorId, int chatType) {
         ImProto.MsgRecallNotify body = ImProto.MsgRecallNotify.newBuilder()
                 .setMsgId(msgId != null ? msgId : "")
                 .setConversationId(conversationId != null ? conversationId : "")
@@ -272,24 +283,32 @@ public class PacketCodec {
     }
 
     public static ImProto.Packet buildRtcSignalPacket(int signalType, String senderId,
-                                                       String receiverId, String callId, String payload) {
+                                                      String receiverId, String callId, String payload) {
         ImProto.RtcSignal.Builder builder = ImProto.RtcSignal.newBuilder()
                 .setSignalType(signalType)
                 .setSenderId(senderId != null ? senderId : "")
                 .setReceiverId(receiverId != null ? receiverId : "");
-        if (callId != null) { builder.setCallId(callId); }
-        if (payload != null) { builder.setPayload(payload); }
+        if (callId != null) {
+            builder.setCallId(callId);
+        }
+        if (payload != null) {
+            builder.setPayload(payload);
+        }
         return create(Cmd.RTC_SIGNAL, 0, builder.build());
     }
 
     public static ImProto.Packet buildRtcGroupPacket(int signalType, String senderId,
-                                                      String groupId, String callId, String payload) {
+                                                     String groupId, String callId, String payload) {
         ImProto.RtcGroup.Builder builder = ImProto.RtcGroup.newBuilder()
                 .setSignalType(signalType)
                 .setSenderId(senderId != null ? senderId : "")
                 .setGroupId(groupId != null ? groupId : "");
-        if (callId != null) { builder.setCallId(callId); }
-        if (payload != null) { builder.setPayload(payload); }
+        if (callId != null) {
+            builder.setCallId(callId);
+        }
+        if (payload != null) {
+            builder.setPayload(payload);
+        }
         return create(Cmd.RTC_GROUP, 0, builder.build());
     }
 
@@ -312,31 +331,52 @@ public class PacketCodec {
     // ====================== 通用解析 ======================
 
     public static GeneratedMessage parseBody(ImProto.Packet packet) throws InvalidProtocolBufferException {
-        if (packet.getBody() == null || packet.getBody().isEmpty()) {
+        if (packet.getBody().isEmpty()) {
             return null;
         }
-
-        return switch (packet.getCmd()) {
-            case Cmd.BIND_REQ -> ImProto.BindRequest.parseFrom(packet.getBody());
-            case Cmd.BIND_RESP -> ImProto.BindResponse.parseFrom(packet.getBody());
-            case Cmd.HEARTBEAT_REQ -> ImProto.Heartbeat.parseFrom(packet.getBody());
-            case Cmd.HEARTBEAT_RESP -> ImProto.HeartbeatResponse.parseFrom(packet.getBody());
-            case Cmd.SINGLE_CHAT_MSG, Cmd.GROUP_CHAT_MSG -> ImProto.ChatMessage.parseFrom(packet.getBody());
-            case Cmd.SERVER_ACK -> ImProto.ServerAck.parseFrom(packet.getBody());
-            case Cmd.DELIVERY_ACK -> ImProto.DeliveryAck.parseFrom(packet.getBody());
-            case Cmd.READ_RECEIPT -> ImProto.ReadReceipt.parseFrom(packet.getBody());
-            case Cmd.MSG_RECALL_REQ -> ImProto.MsgRecallRequest.parseFrom(packet.getBody());
-            case Cmd.MSG_RECALL_NOTIFY -> ImProto.MsgRecallNotify.parseFrom(packet.getBody());
-            case Cmd.ONLINE_STATUS_NOTIFY -> ImProto.OnlineStatusNotify.parseFrom(packet.getBody());
-            case Cmd.FRIEND_REQUEST_NOTIFY -> ImProto.FriendRequestNotify.parseFrom(packet.getBody());
-            case Cmd.FRIEND_STATUS_NOTIFY -> ImProto.FriendStatusNotify.parseFrom(packet.getBody());
-            case Cmd.GROUP_MEMBER_NOTIFY -> ImProto.GroupMemberNotify.parseFrom(packet.getBody());
-            case Cmd.GROUP_NOTIFY -> ImProto.GroupNotify.parseFrom(packet.getBody());
-            case Cmd.GROUP_JOIN_REQUEST_NOTIFY -> ImProto.GroupJoinRequestNotify.parseFrom(packet.getBody());
-            case Cmd.RTC_SIGNAL -> ImProto.RtcSignal.parseFrom(packet.getBody());
-            case Cmd.RTC_GROUP -> ImProto.RtcGroup.parseFrom(packet.getBody());
-            case Cmd.KICK_NOTIFY -> ImProto.KickNotify.parseFrom(packet.getBody());
-            default -> null;
-        };
+        byte[] body = packet.getBody().toByteArray();
+        switch (packet.getCmd()) {
+            case Cmd.BIND_REQ:
+                return ImProto.BindRequest.parseFrom(body);
+            case Cmd.BIND_RESP:
+                return ImProto.BindResponse.parseFrom(body);
+            case Cmd.HEARTBEAT_REQ:
+                return ImProto.Heartbeat.parseFrom(body);
+            case Cmd.HEARTBEAT_RESP:
+                return ImProto.HeartbeatResponse.parseFrom(body);
+            case Cmd.SINGLE_CHAT_MSG:
+            case Cmd.GROUP_CHAT_MSG:
+                return ImProto.ChatMessage.parseFrom(body);
+            case Cmd.SERVER_ACK:
+                return ImProto.ServerAck.parseFrom(body);
+            case Cmd.DELIVERY_ACK:
+                return ImProto.DeliveryAck.parseFrom(body);
+            case Cmd.READ_RECEIPT:
+                return ImProto.ReadReceipt.parseFrom(body);
+            case Cmd.MSG_RECALL_REQ:
+                return ImProto.MsgRecallRequest.parseFrom(body);
+            case Cmd.MSG_RECALL_NOTIFY:
+                return ImProto.MsgRecallNotify.parseFrom(body);
+            case Cmd.ONLINE_STATUS_NOTIFY:
+                return ImProto.OnlineStatusNotify.parseFrom(body);
+            case Cmd.FRIEND_REQUEST_NOTIFY:
+                return ImProto.FriendRequestNotify.parseFrom(body);
+            case Cmd.FRIEND_STATUS_NOTIFY:
+                return ImProto.FriendStatusNotify.parseFrom(body);
+            case Cmd.GROUP_MEMBER_NOTIFY:
+                return ImProto.GroupMemberNotify.parseFrom(body);
+            case Cmd.GROUP_NOTIFY:
+                return ImProto.GroupNotify.parseFrom(body);
+            case Cmd.GROUP_JOIN_REQUEST_NOTIFY:
+                return ImProto.GroupJoinRequestNotify.parseFrom(body);
+            case Cmd.RTC_SIGNAL:
+                return ImProto.RtcSignal.parseFrom(body);
+            case Cmd.RTC_GROUP:
+                return ImProto.RtcGroup.parseFrom(body);
+            case Cmd.KICK_NOTIFY:
+                return ImProto.KickNotify.parseFrom(body);
+            default:
+                return null;
+        }
     }
 }

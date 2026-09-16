@@ -1,16 +1,18 @@
 package io.getbit.gim.core.connection.auth;
 
 import io.getbit.gim.core.config.properties.GimProperties;
+import io.getbit.gim.core.connection.channel.BindResult;
 import io.getbit.gim.core.connection.channel.ChannelManager;
 import io.getbit.gim.core.connection.channel.ConnectionInfo;
 import io.getbit.gim.core.routing.UserRouteService;
 import io.getbit.gim.core.spi.ImTokenVerifier;
-import io.getbit.gim.protocol.codec.*;
+import io.getbit.gim.protocol.codec.DeviceType;
+import io.getbit.gim.protocol.codec.ImProto;
+import io.getbit.gim.protocol.codec.PacketCodec;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.util.AttributeKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * ConnectionAuthHandler.java
@@ -28,9 +30,8 @@ import org.slf4j.LoggerFactory;
  *
  * @author gogym
  */
+@Slf4j
 public class ConnectionAuthHandler {
-
-    private static final Logger logger = LoggerFactory.getLogger(ConnectionAuthHandler.class);
 
     /**
      * 认证超时时间（秒）
@@ -78,7 +79,7 @@ public class ConnectionAuthHandler {
 
             // 1. 参数校验
             if (userId.isEmpty() || token.isEmpty()) {
-                logger.warn("绑定失败: userId 或 token 为空, channelId={}", channel.id().asShortText());
+                log.warn("绑定失败: userId 或 token 为空, channelId={}", channel.id().asShortText());
                 sendBindFail(channel, packet.getSequence(), 401, "userId and token required");
                 return false;
             }
@@ -86,14 +87,14 @@ public class ConnectionAuthHandler {
             // 2. Token 校验（SPI）
             String tokenUserId = tokenVerifier.verifyAndExtractUserId(token);
             if (tokenUserId == null) {
-                logger.warn("绑定失败: token 无效, userId={}", userId);
+                log.warn("绑定失败: token 无效, userId={}", userId);
                 sendBindFail(channel, packet.getSequence(), 401, "invalid token");
                 return false;
             }
 
             // 3. userId 比对（防止 token 盗用）
             if (!userId.equals(tokenUserId)) {
-                logger.warn("绑定失败: userId 不匹配, reqUserId={}, tokenUserId={}", userId, tokenUserId);
+                log.warn("绑定失败: userId 不匹配, reqUserId={}, tokenUserId={}", userId, tokenUserId);
                 sendBindFail(channel, packet.getSequence(), 403, "userId mismatch");
                 return false;
             }
@@ -102,14 +103,14 @@ public class ConnectionAuthHandler {
             DeviceType device = DeviceType.fromCode(deviceStr);
 
             // 5. 绑定通道（同设备互踢），deviceId 随连接信息一并登记
-            ChannelManager.BindResult bindResult = channelManager.bind(userId, device, bindReq.getDeviceId(), channel);
+            BindResult bindResult = channelManager.bind(userId, device, bindReq.getDeviceId(), channel);
 
             // 6. 标记已认证（身份信息已随绑定登记到 ConnectionInfo）
             channel.attr(AUTH_KEY).set(true);
 
             // 7. 处理旧连接：同设备重连静默替换，异设备顶号立即踢下线
-            if (bindResult != null && bindResult.oldChannel().isActive()) {
-                kickOldChannel(userId, device, bindReq.getDeviceId(), bindResult.oldChannel(), bindResult.oldInfo());
+            if (bindResult != null && bindResult.getOldChannel().isActive()) {
+                kickOldChannel(userId, device, bindReq.getDeviceId(), bindResult.getOldChannel(), bindResult.getOldInfo());
             }
 
             // 8. 回复绑定成功
@@ -119,11 +120,11 @@ public class ConnectionAuthHandler {
             // 9. 注册用户路由
             userRouteService.register(userId);
 
-            logger.info("绑定成功, userId={}, device={}, channelId={}", userId, device, channel.id().asShortText());
+            log.info("绑定成功, userId={}, device={}, channelId={}", userId, device, channel.id().asShortText());
             return true;
 
         } catch (Exception e) {
-            logger.error("绑定处理异常, channelId={}", channel.id().asShortText(), e);
+            log.error("绑定处理异常, channelId={}", channel.id().asShortText(), e);
             sendBindFail(channel, packet.getSequence(), 500, "internal error");
             return false;
         }
@@ -145,18 +146,18 @@ public class ConnectionAuthHandler {
         if (info == null) {
             return;
         }
-        String userId = info.userId();
+        String userId = info.getUserId();
 
         // 防御：重复绑定携带的 userId 必须与当前连接一致
         try {
             ImProto.BindRequest bindReq = PacketCodec.parseBindRequest(packet);
             if (!userId.equals(bindReq.getUserId())) {
-                logger.warn("已认证连接重复绑定 userId 不一致, 忽略: channelId={}, current={}, req={}",
+                log.warn("已认证连接重复绑定 userId 不一致, 忽略: channelId={}, current={}, req={}",
                         channel.id().asShortText(), userId, bindReq.getUserId());
                 return;
             }
         } catch (Exception e) {
-            logger.warn("已认证连接重复绑定解析失败, 忽略: channelId={}", channel.id().asShortText(), e);
+            log.warn("已认证连接重复绑定解析失败, 忽略: channelId={}", channel.id().asShortText(), e);
             return;
         }
 
@@ -167,7 +168,7 @@ public class ConnectionAuthHandler {
         ImProto.Packet resp = PacketCodec.buildBindResp(packet.getSequence(), config.getServerId());
         channel.writeAndFlush(resp);
 
-        logger.info("已认证连接重复绑定, 返回 BIND_RESP: userId={}, channelId={}",
+        log.info("已认证连接重复绑定, 返回 BIND_RESP: userId={}, channelId={}",
                 userId, channel.id().asShortText());
     }
 
@@ -191,18 +192,18 @@ public class ConnectionAuthHandler {
     private void kickOldChannel(String userId, DeviceType device, String newDeviceId, Channel oldChannel, ConnectionInfo oldInfo) {
         oldChannel.attr(KICKED_BY_NEW_KEY).set(true);
 
-        String oldDeviceId = oldInfo != null ? oldInfo.deviceId() : null;
+        String oldDeviceId = oldInfo != null ? oldInfo.getDeviceId() : null;
 
         // 同一台设备重连 → 静默替换，不发送 KickNotify
         if (newDeviceId != null && newDeviceId.equals(oldDeviceId)) {
-            logger.info("同设备互踢(同一设备重连, 静默替换), userId={}, device={}, oldChannel={}",
+            log.info("同设备互踢(同一设备重连, 静默替换), userId={}, device={}, oldChannel={}",
                     userId, device, oldChannel.id().asShortText());
             oldChannel.close();
             return;
         }
 
         // 另一台设备顶号 → 立即踢下线
-        logger.info("同设备互踢(异设备顶号), userId={}, device={}, oldChannel={}, oldDeviceId={}, newDeviceId={}",
+        log.info("同设备互踢(异设备顶号), userId={}, device={}, oldChannel={}, oldDeviceId={}, newDeviceId={}",
                 userId, device, oldChannel.id().asShortText(), oldDeviceId, newDeviceId);
         ImProto.Packet kickPacket = PacketCodec.buildKickNotify(409, "kicked by same device login");
         oldChannel.writeAndFlush(kickPacket).addListener(ChannelFutureListener.CLOSE);

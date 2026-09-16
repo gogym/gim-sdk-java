@@ -9,6 +9,7 @@ import io.getbit.gim.protocol.codec.ImProto;
 import io.getbit.gim.protocol.codec.PacketCodec;
 import io.netty.channel.Channel;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 /**
@@ -28,6 +29,7 @@ import java.util.List;
  *
  * @author gogym
  */
+@Slf4j
 public class GroupChatHandler extends BaseHandler {
 
     private final ImIdGenerator idGenerator;
@@ -57,7 +59,7 @@ public class GroupChatHandler extends BaseHandler {
 
             // 1. 群成员资格校验
             if (!groupMemberProvider.isGroupMember(groupId, userId)) {
-                logger.info("群消息被拒绝(非群成员): userId={}, groupId={}", userId, groupId);
+                log.info("群消息被拒绝(非群成员): userId={}, groupId={}", userId, groupId);
                 ImProto.Packet rejectAck = PacketCodec.buildServerAckFail(
                         packet.getRequestId(), 403, packet.getSequence());
                 channel.writeAndFlush(rejectAck);
@@ -67,7 +69,7 @@ public class GroupChatHandler extends BaseHandler {
             // 2. 禁言检查
             String muteReason = groupMemberProvider.checkCanSendMessage(groupId, userId);
             if (muteReason != null) {
-                logger.info("群消息被拒绝: userId={}, groupId={}, reason={}", userId, groupId, muteReason);
+                log.info("群消息被拒绝: userId={}, groupId={}, reason={}", userId, groupId, muteReason);
                 ImProto.Packet muteAck = PacketCodec.buildServerAckFail(
                         packet.getRequestId(), 403, packet.getSequence());
                 channel.writeAndFlush(muteAck);
@@ -100,10 +102,10 @@ public class GroupChatHandler extends BaseHandler {
             // 7. 触发消息回调（业务层持久化）
             fireReceivedMessage(msgPacket);
 
-            logger.debug("群聊消息处理完成: msgId={}, from={}, group={}", msgId, userId, groupId);
+            log.debug("群聊消息处理完成: msgId={}, from={}, group={}", msgId, userId, groupId);
 
         } catch (Exception e) {
-            logger.error("群聊消息处理失败, userId={}", userId, e);
+            log.error("群聊消息处理失败, userId={}", userId, e);
             ImProto.Packet failAck = PacketCodec.buildServerAckFail(
                     packet.getRequestId(), 500, packet.getSequence());
             channel.writeAndFlush(failAck);
@@ -121,7 +123,7 @@ public class GroupChatHandler extends BaseHandler {
     private void routeToMembers(ImProto.ChatMessage chatMsg, ImProto.Packet msgPacket, String senderId, String groupId) {
         List<String> memberUserIds = groupMemberProvider.getGroupMemberUserIds(groupId);
         if (memberUserIds == null || memberUserIds.isEmpty()) {
-            logger.warn("群消息路由: 群 {} 无活跃成员", groupId);
+            log.warn("群消息路由: 群 {} 无活跃成员", groupId);
             return;
         }
 
@@ -147,7 +149,7 @@ public class GroupChatHandler extends BaseHandler {
             }
         }
 
-        logger.debug("群消息路由完成: group={}, msgId={}, members={}, delivered={}, offline={}",
+        log.debug("群消息路由完成: group={}, msgId={}, members={}, delivered={}, offline={}",
                 groupId, chatMsg.getMsgId(), memberUserIds.size(), deliveredCount, offlineCount);
     }
 }

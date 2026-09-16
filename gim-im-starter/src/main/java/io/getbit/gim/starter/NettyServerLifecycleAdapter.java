@@ -1,11 +1,11 @@
 package io.getbit.gim.starter;
 
-import io.getbit.gim.core.bootstrap.GimBootstrap;
+import io.getbit.gim.core.bootstrap.StartContext;
 import org.springframework.context.SmartLifecycle;
 
 /**
  * NettyServerLifecycleAdapter.java
- *
+ * <p>
  * 将 core 的 StartContext 适配为 Spring SmartLifecycle
  * 使 IM 服务器（Netty + 集群路由）随 Spring 容器自动启停
  *
@@ -13,10 +13,10 @@ import org.springframework.context.SmartLifecycle;
  */
 public class NettyServerLifecycleAdapter implements SmartLifecycle {
 
-    private final GimBootstrap.StartContext startContext;
+    private final StartContext startContext;
     private volatile boolean running = false;
 
-    public NettyServerLifecycleAdapter(GimBootstrap.StartContext startContext) {
+    public NettyServerLifecycleAdapter(StartContext startContext) {
         this.startContext = startContext;
     }
 

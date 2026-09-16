@@ -9,6 +9,7 @@ import io.getbit.gim.core.spi.ImFriendProvider;
 import io.getbit.gim.protocol.codec.PacketCodec;
 import io.getbit.gim.protocol.codec.ImProto;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 /**
@@ -23,6 +24,7 @@ import java.util.List;
  *
  * @author gogym
  */
+@Slf4j
 public class FriendNotifyService extends BaseNotifyService {
 
     private final ImFriendProvider friendProvider;
@@ -57,7 +59,7 @@ public class FriendNotifyService extends BaseNotifyService {
                 senderId, receiverId, nickname, avatar, message, requestId, logId);
         deliverToUser(receiverId, packet);
 
-        logger.debug("好友申请通知已发送: from={}, to={}, requestId={}", senderId, receiverId, requestId);
+        log.debug("好友申请通知已发送: from={}, to={}, requestId={}", senderId, receiverId, requestId);
     }
 
     /**
@@ -73,7 +75,7 @@ public class FriendNotifyService extends BaseNotifyService {
                 senderId, receiverId, accepted ? 1 : 2);
         deliverToUser(receiverId, packet);
 
-        logger.debug("好友申请结果通知已发送: from={}, to={}, accepted={}", senderId, receiverId, accepted);
+        log.debug("好友申请结果通知已发送: from={}, to={}, accepted={}", senderId, receiverId, accepted);
     }
 
     /**
@@ -87,7 +89,7 @@ public class FriendNotifyService extends BaseNotifyService {
                 deletedUserId, notifyUserId, 3);
         deliverToUser(notifyUserId, packet);
 
-        logger.debug("好友删除通知已发送: deletedBy={}, notify={}", deletedUserId, notifyUserId);
+        log.debug("好友删除通知已发送: deletedBy={}, notify={}", deletedUserId, notifyUserId);
     }
 
     // ====================== 在线状态通知 ======================
@@ -109,9 +111,9 @@ public class FriendNotifyService extends BaseNotifyService {
                 deliverToUser(friendId, packet);
             }
 
-            logger.debug("上线通知已发送: userId={}, friendCount={}", userId, friendIds.size());
+            log.debug("上线通知已发送: userId={}, friendCount={}", userId, friendIds.size());
         } catch (Exception e) {
-            logger.error("上线通知处理失败: userId={}", userId, e);
+            log.error("上线通知处理失败: userId={}", userId, e);
         }
     }
 
@@ -138,9 +140,9 @@ public class FriendNotifyService extends BaseNotifyService {
                 deliverToUser(userId, packet);
             }
 
-            logger.debug("好友在线状态同步完成: userId={}, friendCount={}", userId, friendIds.size());
+            log.debug("好友在线状态同步完成: userId={}, friendCount={}", userId, friendIds.size());
         } catch (Exception e) {
-            logger.error("好友在线状态同步失败: userId={}", userId, e);
+            log.error("好友在线状态同步失败: userId={}", userId, e);
         }
     }
 
@@ -161,9 +163,9 @@ public class FriendNotifyService extends BaseNotifyService {
             ImProto.Packet packet = PacketCodec.buildOnlineStatusNotifyPacket(friendId, status);
             deliverToUser(userId, packet);
 
-            logger.debug("单个好友在线状态同步完成: userId={}, friendId={}, online={}", userId, friendId, online);
+            log.debug("单个好友在线状态同步完成: userId={}, friendId={}, online={}", userId, friendId, online);
         } catch (Exception e) {
-            logger.error("单个好友在线状态同步失败: userId={}, friendId={}", userId, friendId, e);
+            log.error("单个好友在线状态同步失败: userId={}, friendId={}", userId, friendId, e);
         }
     }
 
@@ -176,7 +178,7 @@ public class FriendNotifyService extends BaseNotifyService {
         try {
             List<String> friendIds = friendProvider.getOnlineNotifyFriendIds(userId);
             if (friendIds == null || friendIds.isEmpty()) {
-                logger.debug("用户 {} 无好友，跳过离线通知", userId);
+                log.debug("用户 {} 无好友，跳过离线通知", userId);
                 return;
             }
 
@@ -185,9 +187,9 @@ public class FriendNotifyService extends BaseNotifyService {
                 deliverToUser(friendId, packet);
             }
 
-            logger.debug("离线通知已发送: userId={}, friendCount={}", userId, friendIds.size());
+            log.debug("离线通知已发送: userId={}, friendCount={}", userId, friendIds.size());
         } catch (Exception e) {
-            logger.error("离线通知处理失败: userId={}", userId, e);
+            log.error("离线通知处理失败: userId={}", userId, e);
         }
     }
 }

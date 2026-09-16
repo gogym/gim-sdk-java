@@ -18,16 +18,26 @@ public class WebRtcSession {
     private long endTime;
 
     public long getDuration() {
-        if (endTime > 0) return endTime - connectTime;
-        if (connectTime > 0) return System.currentTimeMillis() - connectTime;
+        if (endTime > 0) {
+            return endTime - connectTime;
+        }
+        if (connectTime > 0) {
+            return System.currentTimeMillis() - connectTime;
+        }
         return 0;
     }
     public long getDurationSeconds() { return getDuration() / 1000; }
     public boolean isParticipant(String userId) { return userId != null && (userId.equals(callerId) || userId.equals(calleeId)); }
     public Channel getChannelByUser(String userId) {
-        if (userId == null) return null;
-        if (userId.equals(callerId)) return callerChannel;
-        if (userId.equals(calleeId)) return calleeChannel;
+        if (userId == null) {
+            return null;
+        }
+        if (userId.equals(callerId)) {
+            return callerChannel;
+        }
+        if (userId.equals(calleeId)) {
+            return calleeChannel;
+        }
         return null;
     }
 }

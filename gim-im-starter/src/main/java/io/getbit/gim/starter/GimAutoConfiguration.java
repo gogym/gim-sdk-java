@@ -1,6 +1,7 @@
 package io.getbit.gim.starter;
 
 import io.getbit.gim.core.bootstrap.GimBootstrap;
+import io.getbit.gim.core.bootstrap.StartContext;
 import io.getbit.gim.core.config.properties.GimProperties;
 import io.getbit.gim.core.bootstrap.IMServerFacade;
 import io.getbit.gim.core.connection.server.NettyServer;
@@ -25,7 +26,7 @@ import java.util.List;
 
 /**
  * GimAutoConfiguration.java
- *
+ * <p>
  * GIM SDK Spring Boot 自动配置
  * 使用方只需引入 gim-im-starter 依赖 + 提供 SPI 实现即可自动启动
  * 配置 gim.enable=false 可禁用 IM 服务器启动（默认 true）：
@@ -47,16 +48,16 @@ public class GimAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public GimBootstrap.StartContext gimStartContext(GimProperties config,
-                                                      ImTokenVerifier tokenVerifier,
-                                                      ImRedisAdapter redisAdapter,
-                                                      ImIdGenerator idGenerator,
-                                                      ObjectProvider<ImRedisSubscriber> redisSubscriberProvider,
-                                                      ObjectProvider<ImGroupMemberProvider> groupMemberProviderProvider,
-                                                      ObjectProvider<ImFriendProvider> friendProviderProvider,
-                                                      ObjectProvider<List<ImEventListener>> eventListenersProvider,
-                                                      ObjectProvider<GroupCallSessionManager> groupCallManagerProvider,
-                                                      ObjectProvider<TurnCredentialService> turnCredentialServiceProvider) {
+    public StartContext gimStartContext(GimProperties config,
+                                                     ImTokenVerifier tokenVerifier,
+                                                     ImRedisAdapter redisAdapter,
+                                                     ImIdGenerator idGenerator,
+                                                     ObjectProvider<ImRedisSubscriber> redisSubscriberProvider,
+                                                     ObjectProvider<ImGroupMemberProvider> groupMemberProviderProvider,
+                                                     ObjectProvider<ImFriendProvider> friendProviderProvider,
+                                                     ObjectProvider<List<ImEventListener>> eventListenersProvider,
+                                                     ObjectProvider<GroupCallSessionManager> groupCallManagerProvider,
+                                                     ObjectProvider<TurnCredentialService> turnCredentialServiceProvider) {
         GimBootstrap.Builder builder = GimBootstrap.builder()
                 .config(config)
                 .tokenVerifier(tokenVerifier)
@@ -108,13 +109,13 @@ public class GimAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public IMServerFacade imServerFacade(GimBootstrap.StartContext startContext) {
+    public IMServerFacade imServerFacade(StartContext startContext) {
         return startContext.getFacade();
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public NettyServer nettyServer(GimBootstrap.StartContext startContext) {
+    public NettyServer nettyServer(StartContext startContext) {
         return startContext.getNettyServer();
     }
 
@@ -126,7 +127,7 @@ public class GimAutoConfiguration {
      */
     @Bean
     @ConditionalOnProperty(prefix = "gim", name = "enable", havingValue = "true", matchIfMissing = true)
-    public SmartLifecycle nettyServerLifecycle(GimBootstrap.StartContext startContext) {
+    public SmartLifecycle nettyServerLifecycle(StartContext startContext) {
         return new NettyServerLifecycleAdapter(startContext);
     }
 }

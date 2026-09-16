@@ -5,8 +5,7 @@ import io.getbit.gim.core.connection.channel.ChannelManager;
 import io.getbit.gim.core.routing.UserRouteService;
 import io.getbit.gim.protocol.codec.DeviceType;
 import io.netty.channel.Channel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 
@@ -23,9 +22,8 @@ import java.util.Map;
  *
  * @author gogym
  */
+@Slf4j
 public class ConnectionService {
-
-    private static final Logger logger = LoggerFactory.getLogger(ConnectionService.class);
 
     private final ChannelManager channelManager;
     private final UserRouteService userRouteService;
@@ -49,7 +47,7 @@ public class ConnectionService {
     public boolean kickUser(String userId) {
         Map<DeviceType, Channel> deviceChannels = channelManager.getChannels(userId);
         if (deviceChannels.isEmpty()) {
-            logger.debug("踢人下线: 用户不在线, userId={}", userId);
+            log.debug("踢人下线: 用户不在线, userId={}", userId);
             return false;
         }
 
@@ -70,7 +68,7 @@ public class ConnectionService {
         if (closedCount > 0) {
             userRouteService.unregister(userId);
             facade.fireUserOffline(userId);
-            logger.info("踢人下线: userId={}, 关闭设备数={}/{}", userId, closedCount, deviceChannels.size());
+            log.info("踢人下线: userId={}, 关闭设备数={}/{}", userId, closedCount, deviceChannels.size());
         }
         return closedCount > 0;
     }
@@ -87,7 +85,7 @@ public class ConnectionService {
         Channel channel = deviceChannels.get(device);
 
         if (channel == null || !channel.isActive()) {
-            logger.debug("踢人下线: 设备不在线, userId={}, device={}", userId, device);
+            log.debug("踢人下线: 设备不在线, userId={}, device={}", userId, device);
             return false;
         }
 
@@ -103,7 +101,7 @@ public class ConnectionService {
             facade.fireUserOffline(userId);
         }
 
-        logger.info("踢人下线: userId={}, device={}", userId, device);
+        log.info("踢人下线: userId={}, device={}", userId, device);
         return true;
     }
 

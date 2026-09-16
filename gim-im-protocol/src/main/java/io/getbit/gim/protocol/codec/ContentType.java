@@ -1,56 +1,68 @@
 package io.getbit.gim.protocol.codec;
 
+import lombok.Getter;
+
 import java.util.Arrays;
-import java.util.Optional;
 
 /**
  * ContentType.java
- *
- * @description: 消息内容类型枚举
+ * <p>
+ * 消息内容类型枚举
  * 对应 ChatMessage.contentType 字段
  */
 public enum ContentType {
 
-    /** 文字消息 */
+    /**
+     * 文字消息
+     */
     TEXT(1, "文字", "[消息]"),
 
-    /** 图片消息 */
+    /**
+     * 图片消息
+     */
     IMAGE(2, "图片", "[图片]"),
 
-    /** 音频消息 */
+    /**
+     * 音频消息
+     */
     AUDIO(3, "语音", "[语音]"),
 
-    /** 视频消息 */
+    /**
+     * 视频消息
+     */
     VIDEO(4, "视频", "[视频]"),
 
-    /** 文件消息 */
+    /**
+     * 文件消息
+     */
     FILE(5, "文件", "[文件]"),
 
-    /** 位置消息 */
+    /**
+     * 位置消息
+     */
     LOCATION(6, "位置", "[位置]"),
 
-    /** 自定义消息 */
+    /**
+     * 自定义消息
+     */
     CUSTOM(7, "自定义", "[自定义消息]"),
 
-    /** 通话记录 */
+    /**
+     * 通话记录
+     */
     CALL_RECORD(8, "通话记录", "[通话记录]");
 
+    @Getter
     private final int value;
+    @Getter
     private final String label;
+    @Getter
     private final String pushText;
 
     ContentType(int value, String label, String pushText) {
         this.value = value;
         this.label = label;
         this.pushText = pushText;
-    }
-
-    public int getValue() {
-        return value;
-    }
-
-    public String getLabel() {
-        return label;
     }
 
     /**
@@ -80,15 +92,4 @@ public enum ContentType {
                 .orElse(null);
     }
 
-    /**
-     * 根据 value 获取枚举（Optional 包装）
-     *
-     * @param value 类型值
-     * @return Optional 包装的枚举值
-     */
-    public static Optional<ContentType> fromValueOptional(int value) {
-        return Arrays.stream(values())
-                .filter(t -> t.value == value)
-                .findFirst();
-    }
 }

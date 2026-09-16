@@ -2,14 +2,14 @@ package io.getbit.gim.core.bootstrap;
 
 import io.getbit.gim.core.config.properties.GimProperties;
 import io.getbit.gim.core.connection.ConnectionService;
-import io.getbit.gim.core.connection.channel.ChannelManager;
 import io.getbit.gim.core.connection.auth.ConnectionAuthHandler;
+import io.getbit.gim.core.connection.channel.ChannelManager;
 import io.getbit.gim.core.connection.health.ImNodeHealthIndicator;
-import io.getbit.gim.core.notify.friend.FriendNotifyService;
-import io.getbit.gim.core.notify.group.GroupNotifyService;
 import io.getbit.gim.core.message.handler.BaseHandler;
 import io.getbit.gim.core.message.handler.DefaultMessageDispatcher;
 import io.getbit.gim.core.message.handler.MessageDispatcher;
+import io.getbit.gim.core.notify.friend.FriendNotifyService;
+import io.getbit.gim.core.notify.group.GroupNotifyService;
 import io.getbit.gim.core.routing.ClusterMessageRouter;
 import io.getbit.gim.core.routing.UserRouteService;
 import io.getbit.gim.core.spi.ConnectionCloseListener;
@@ -17,8 +17,7 @@ import io.getbit.gim.core.spi.ImEventListener;
 import io.getbit.gim.core.spi.ImRedisAdapter;
 import io.getbit.gim.core.spi.ImRedisSubscriber;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
 import java.util.List;
@@ -33,9 +32,8 @@ import java.util.function.Function;
  *
  * @author gogym
  */
+@Slf4j
 public class IMServerFacade {
-
-    private static final Logger logger = LoggerFactory.getLogger(IMServerFacade.class);
 
     @Getter
     private final GimProperties config;
@@ -117,7 +115,7 @@ public class IMServerFacade {
             }
         }
 
-        logger.info("IMServerFacade 初始化完成, serverId={}, cluster={}",
+        log.info("IMServerFacade 初始化完成, serverId={}, cluster={}",
                 config.getServerId(), config.isEnableCluster());
     }
 
@@ -221,7 +219,7 @@ public class IMServerFacade {
                 try {
                     listener.onUserOnline(userId, device, config.getServerId());
                 } catch (Exception e) {
-                    logger.error("事件监听器回调异常: onUserOnline", e);
+                    log.error("事件监听器回调异常: onUserOnline", e);
                 }
             }
         }
@@ -252,7 +250,7 @@ public class IMServerFacade {
                 try {
                     listener.onUserOffline(userId);
                 } catch (Exception e) {
-                    logger.error("事件监听器回调异常: onUserOffline", e);
+                    log.error("事件监听器回调异常: onUserOffline", e);
                 }
             }
         }
@@ -267,7 +265,7 @@ public class IMServerFacade {
             try {
                 listener.onConnectionClosed(userId);
             } catch (Exception e) {
-                logger.error("连接关闭监听器回调异常: onConnectionClosed, userId={}", userId, e);
+                log.error("连接关闭监听器回调异常: onConnectionClosed, userId={}", userId, e);
             }
         }
     }

@@ -8,6 +8,7 @@ import io.getbit.gim.protocol.codec.ImProto;
 import io.getbit.gim.protocol.codec.PacketCodec;
 import io.netty.channel.Channel;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 /**
@@ -29,6 +30,7 @@ import java.util.List;
  *
  * @author gogym
  */
+@Slf4j
 public class MsgRecallHandler extends BaseHandler {
 
     private final ImGroupMemberProvider groupMemberProvider;
@@ -52,7 +54,7 @@ public class MsgRecallHandler extends BaseHandler {
             String conversationId = recallReq.getConversationId();
             int chatType = recallReq.getChatType();
 
-            logger.info("收到撤回请求: from={}, msgId={}, conversationId={}, chatType={}",
+            log.info("收到撤回请求: from={}, msgId={}, conversationId={}, chatType={}",
                     userId, msgId, conversationId, chatType);
 
             // 1. 回复发送方 ServerAck（成功）
@@ -71,14 +73,14 @@ public class MsgRecallHandler extends BaseHandler {
                 try {
                     listener.onMessageRecalled(packet);
                 } catch (Exception e) {
-                    logger.error("撤回回调异常: msgId={}", msgId, e);
+                    log.error("撤回回调异常: msgId={}", msgId, e);
                 }
             }
 
-            logger.debug("消息撤回处理完成: msgId={}, userId={}", msgId, userId);
+            log.debug("消息撤回处理完成: msgId={}, userId={}", msgId, userId);
 
         } catch (Exception e) {
-            logger.error("消息撤回处理失败, userId={}", userId, e);
+            log.error("消息撤回处理失败, userId={}", userId, e);
             ImProto.Packet failAck = PacketCodec.buildServerAckFail(
                     packet.getRequestId(), 500, packet.getSequence());
             channel.writeAndFlush(failAck);
@@ -100,9 +102,9 @@ public class MsgRecallHandler extends BaseHandler {
             String receiverId = parseReceiverFromConversation(conversationId, userId);
             if (receiverId != null) {
                 routeToUser(receiverId, recallNotify);
-                logger.debug("单聊撤回通知已推送: msgId={}, to={}", msgId, receiverId);
+                log.debug("单聊撤回通知已推送: msgId={}, to={}", msgId, receiverId);
             } else {
-                logger.warn("单聊撤回: 无法从 conversationId={} 解析接收者", conversationId);
+                log.warn("单聊撤回: 无法从 conversationId={} 解析接收者", conversationId);
             }
 
         } else if (chatType == 2) {
@@ -117,7 +119,7 @@ public class MsgRecallHandler extends BaseHandler {
                     }
                     routeToUser(memberId, recallNotify);
                 }
-                logger.debug("群聊撤回通知已推送群成员: msgId={}, group={}, members={}",
+                log.debug("群聊撤回通知已推送群成员: msgId={}, group={}, members={}",
                         msgId, groupId, memberUserIds.size());
             }
         }

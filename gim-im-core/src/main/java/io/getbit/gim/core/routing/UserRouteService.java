@@ -6,9 +6,8 @@ import io.getbit.gim.core.config.properties.GimProperties;
 import io.getbit.gim.core.spi.ImRedisAdapter;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -24,9 +23,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @author gogym
  */
+@Slf4j
 public class UserRouteService {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserRouteService.class);
 
     // key 统一由 CacheKeyBuilder 管理
 
@@ -70,7 +69,7 @@ public class UserRouteService {
         redisAdapter.setex(key, ROUTE_EXPIRE_SECONDS, serverId);
         localCache.put(userId, serverId);
 
-        logger.debug("注册用户路由: userId={}, serverId={}", userId, serverId);
+        log.debug("注册用户路由: userId={}, serverId={}", userId, serverId);
     }
 
     /**
@@ -90,7 +89,7 @@ public class UserRouteService {
         redisAdapter.del(key);
         localCache.invalidate(userId);
 
-        logger.debug("注销用户路由: userId={}", userId);
+        log.debug("注销用户路由: userId={}", userId);
     }
 
     /**

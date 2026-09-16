@@ -6,23 +6,31 @@ import java.util.Arrays;
 
 /**
  * DeviceType.java
- *
- * @description: 设备类型枚举
+ * <p>
+ * 设备类型枚举
  * 同一用户相同设备类型只保留最新连接（互踢），不同设备类型可共存
  */
 @Getter
 public enum DeviceType {
 
-    /** 手机端 */
+    /**
+     * 手机端
+     */
     MOBILE("mobile"),
 
-    /** 桌面客户端 */
+    /**
+     * 桌面客户端
+     */
     DESKTOP("desktop"),
 
-    /** 网页端 */
+    /**
+     * 网页端
+     */
     WEB("web"),
 
-    /** 平板端 */
+    /**
+     * 平板端
+     */
     PAD("pad");
 
     private final String code;

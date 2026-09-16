@@ -39,13 +39,14 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>17</java.version>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <!-- SDK 最低支持 JDK 11，使用 maven.compiler.release 保证不误用 11 以上的 API -->
+        <java.version>11</java.version>
+        <maven.compiler.release>11</maven.compiler.release>
 
         <gim-sdk-java.version>1.0.1-SNAPSHOT</gim-sdk-java.version>
 
-        <spring-boot.version>3.5.3</spring-boot.version>
+        <!-- Spring Boot 2.7.x 为最后支持 JDK 8/11 的版本线（Boot 3 要求 JDK 17+） -->
+        <spring-boot.version>2.7.18</spring-boot.version>
         <netty.version>4.1.117.Final</netty.version>
         <protobuf.version>4.36.0</protobuf.version>
         <caffeine.version>3.1.8</caffeine.version>
@@ -132,8 +133,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler-plugin.version}</version>
                     <configuration>
-                        <source>${java.version}</source>
-                        <target>${java.version}</target>
+                        <release>${maven.compiler.release}</release>
                         <encoding>UTF-8</encoding>
                         <parameters>true</parameters>
                         <annotationProcessorPaths>

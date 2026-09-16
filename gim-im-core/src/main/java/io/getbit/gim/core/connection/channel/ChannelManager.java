@@ -3,15 +3,14 @@ package io.getbit.gim.core.connection.channel;
 import io.getbit.gim.core.config.properties.GimProperties;
 import io.getbit.gim.protocol.codec.DeviceType;
 import io.netty.channel.Channel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * ChannelManager.java
- *
+ * <p>
  * 多设备通道管理器
  * 支持同一用户在多种设备类型上同时在线（分组共存策略）
  * 同一设备类型互踢：新连接替换旧连接
@@ -20,9 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author gogym
  */
+@Slf4j
 public class ChannelManager {
-
-    private static final Logger logger = LoggerFactory.getLogger(ChannelManager.class);
 
     private final String serverId;
 
@@ -43,14 +41,11 @@ public class ChannelManager {
     // ====================== 绑定与解绑 ======================
 
     /**
-     * 绑定结果：旧连接及其连接信息（无旧连接时返回 null）
+     * 绑定通道（同设备互踢）
      *
-     * @param oldChannel 被替换的旧连接（同设备互踢），无旧连接时为 null
-     * @param oldInfo    旧连接的 ConnectionInfo（含 deviceId，供互踢判定），无旧连接时为 null
+     * @param oldChannel 旧连接的 Channel（含 deviceId，供互踢判定），无旧连接时为 null
+     * @return 旧连接及信息，无旧连接或重复绑定时返回 null
      */
-    public record BindResult(Channel oldChannel, ConnectionInfo oldInfo) {
-    }
-
     public BindResult bind(String userId, DeviceType device, String deviceId, Channel channel) {
         String channelId = channel.id().asLongText();
 
@@ -62,12 +57,12 @@ public class ChannelManager {
         ConnectionInfo oldInfo = null;
         if (oldChannel != null && oldChannel != channel) {
             oldInfo = connections.remove(oldChannel.id().asLongText());
-            logger.debug("同设备互踢, userId: {}, device: {}, oldChannel: {}", userId, device, oldChannel.id().asShortText());
+            log.debug("同设备互踢, userId: {}, device: {}, oldChannel: {}", userId, device, oldChannel.id().asShortText());
         }
 
         connections.put(channelId, ConnectionInfo.of(serverId, userId, device, deviceId));
 
-        logger.debug("绑定通道, userId: {}, device: {}, channelId: {}", userId, device, channelId);
+        log.debug("绑定通道, userId: {}, device: {}, channelId: {}", userId, device, channelId);
         // 防御自踢：同一连接重复绑定（oldChannel == channel）时返回 null，
         // 避免上层将其当作旧连接执行 kickOldChannel，把自己的新连接关闭形成重连死循环
         return oldChannel != null && oldChannel != channel ? new BindResult(oldChannel, oldInfo) : null;
@@ -92,7 +87,7 @@ public class ChannelManager {
             userChannels.remove(userId, deviceMap);
         }
 
-        logger.debug("解绑通道, userId: {}, device: {}", userId, device);
+        log.debug("解绑通道, userId: {}, device: {}", userId, device);
     }
 
     public ConnectionInfo unbindByChannelId(String channelId) {
@@ -102,8 +97,8 @@ public class ChannelManager {
             return null;
         }
 
-        String userId = info.userId();
-        DeviceType device = info.device();
+        String userId = info.getUserId();
+        DeviceType device = info.getDevice();
 
         if (userId != null) {
             Map<DeviceType, Channel> deviceMap = userChannels.get(userId);
@@ -116,7 +111,7 @@ public class ChannelManager {
                     }
                 }
             }
-            logger.debug("断连解绑, userId: {}, device: {}, channelId: {}", userId, device, channelId);
+            log.debug("断连解绑, userId: {}, device: {}, channelId: {}", userId, device, channelId);
         }
 
         return info;
