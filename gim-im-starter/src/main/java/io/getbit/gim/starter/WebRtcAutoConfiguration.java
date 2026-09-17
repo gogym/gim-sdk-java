@@ -2,9 +2,10 @@ package io.getbit.gim.starter;
 
 import io.getbit.gim.core.config.properties.GimProperties;
 import io.getbit.gim.core.config.properties.RtcGroupCallProperties;
-import io.getbit.gim.webrtc.groupcall.GroupCallConfig;
+import io.getbit.gim.core.spi.ImRedisAdapter;
+import io.getbit.gim.webrtc.groupcall.config.GroupCallConfig;
 import io.getbit.gim.webrtc.groupcall.GroupCallSessionManager;
-import io.getbit.gim.webrtc.session.WebRtcSessionManager;
+import io.getbit.gim.webrtc.singlecall.SingleCallSessionManager;
 import io.getbit.gim.webrtc.sfu.LiveKitConfig;
 import io.getbit.gim.webrtc.sfu.LiveKitSfuAdapter;
 import io.getbit.gim.webrtc.sfu.SfuAdapter;
@@ -29,10 +30,19 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class WebRtcAutoConfiguration {
 
-    @Bean
+    /**
+     * 1:1 通话会话生命周期管理器
+     * 装配 ImRedisAdapter 时会话元数据存 Redis（集群可见），否则退化为本地内存态；
+     * 关闭时通过 shutdown 释放调度线程与本地状态（Redis 状态由 TTL 兜底回收，TALKING 会话由续期任务滚动续期）
+     */
+    @Bean(destroyMethod = "shutdown")
     @ConditionalOnMissingBean
-    public WebRtcSessionManager webRtcSessionManager() {
-        return new WebRtcSessionManager();
+    public SingleCallSessionManager singleCallSessionManager(GimProperties gimProperties,
+                                                     ObjectProvider<ImRedisAdapter> redisAdapterProvider) {
+        return new SingleCallSessionManager(
+                redisAdapterProvider.getIfAvailable(),
+                gimProperties.getRtcCall().getRingTimeoutSeconds(),
+                gimProperties.getRtcCall().getSessionTtlSeconds());
     }
 
     @Bean
@@ -87,7 +97,7 @@ public class WebRtcAutoConfiguration {
     @ConditionalOnProperty(prefix = "gim.rtc-group-call", name = "enabled", havingValue = "true", matchIfMissing = true)
     public GroupCallSessionManager groupCallSessionManager(GimProperties gimProperties,
                                                            ObjectProvider<SfuAdapter> sfuAdapterProvider,
-                                                           ObjectProvider<WebRtcSessionManager> oneToOneProvider) {
+                                                           ObjectProvider<SingleCallSessionManager> singleCallProvider) {
         RtcGroupCallProperties p = gimProperties.getRtcGroupCall();
 
         GroupCallConfig config = new GroupCallConfig();
@@ -99,6 +109,6 @@ public class WebRtcAutoConfiguration {
         return new GroupCallSessionManager(
                 config,
                 sfuAdapterProvider.getIfAvailable(),
-                oneToOneProvider.getIfAvailable());
+                singleCallProvider.getIfAvailable());
     }
 }

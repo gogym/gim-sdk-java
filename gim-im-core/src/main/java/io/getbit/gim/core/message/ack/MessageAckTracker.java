@@ -1,6 +1,7 @@
 package io.getbit.gim.core.message.ack;
 
 import io.getbit.gim.core.spi.ImEventListener;
+import io.getbit.gim.core.util.GimThreads;
 import io.getbit.gim.protocol.codec.ImProto;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -8,7 +9,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -86,11 +86,7 @@ public class MessageAckTracker {
         this.reWriteNum = reWriteNum > 0 ? reWriteNum : 3;
         this.reWriteDelay = reWriteDelay > 0 ? reWriteDelay : 1000;
         this.resendCallback = resendCallback;
-        this.scheduler = autoRewrite ? Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "ack-resend");
-            t.setDaemon(true);
-            return t;
-        }) : null;
+        this.scheduler = autoRewrite ? GimThreads.singleDaemonScheduler("ack-resend") : null;
 
         this.pendingAcks = Caffeine.newBuilder()
                 .expireAfterWrite(this.ackTimeoutSeconds, TimeUnit.SECONDS)

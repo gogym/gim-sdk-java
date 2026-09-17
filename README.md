@@ -8,7 +8,8 @@
 - **SPI 扩展** — 通过 7 个 SPI 接口灵活对接你的 Redis、Token 验证、ID 生成、MQ 等
 - **高性能长连接** — 基于 Netty 4 + Protobuf 二进制协议，支持心跳检测、ACK 确认、自动重发
 - **丰富消息能力** — 支持单聊、群聊、消息撤回、已读回执、投递确认、RTC 信令
-- **群视频通话** — 混合架构：小群（≤8 人）Mesh P2P 直连，大群（20+ 人）对接 SFU，服务端统一管理房间生命周期
+- **群视频通话** — 混合架构：小群（≤8 人）Mesh P2P 直连，大群（20+ 人）对接 SFU，服务端统一管理房间生命周期、媒体开关同步与话单回调
+- **1:1 通话会话管理** — 服务端忙线互斥、振铃超时自动取消、掉线清理、通话话单回调，会话元数据支持 Redis 集群可见
 - **集群模式** — 通过 Redis Pub/Sub 实现跨节点消息路由，水平扩展
 - **健康检查** — 内置 Spring Boot Actuator 健康指标，方便运维监控
 
@@ -142,6 +143,30 @@ public class Application {
 }
 ```
 
+## 1:1 通话（服务端会话管理）
+
+1:1 通话默认为信令转发模式；开启会话管理后（默认开启），服务端理解通话生命周期，提供以下能力：
+
+- **忙线互斥** — 主叫/被叫任一方已在 1:1 或群通话中，`callRequest` 被拦截并向主叫回 `callReject(reason=busy)`
+- **服务端 callId** — 客户端未携带 `callId` 时由服务端生成（`ImIdGenerator`）并回填，回传双方
+- **振铃超时** — 振铃超过 `ring-timeout-seconds` 无应答，服务端自动结束会话并向主叫下发 `callCancel(reason=timeout)`
+- **掉线清理** — 用户全部设备离线时结束其进行中的通话，并向对端下发 `callHangup(reason=disconnect)`
+- **话单回调** — 实现 `ImSingleCallListener` 并注册为 Spring Bean，即可收到通话建立/结束事件（含时长与结束原因）
+
+集群部署时，会话元数据经 `ImRedisAdapter` 存入 Redis（`im:rtc:call:{callId}` / `im:rtc:busy:{userId}`），跨节点可见；建议实现 `setnx` 方法以获得原子忙线占位（未实现时降级为 GET+SETEX，存在极小竞态窗口）。
+
+会话状态不做固定时长驱逐：TALKING 会话由续期任务按 `session-ttl-seconds/4` 周期滚动续期（Redis 重写 / 本地刷新），长通话不会因 TTL 被误清理；未配置 Redis 时退化为本地内存态，行为一致。
+
+### 配置示例
+
+```yaml
+gim:
+  rtc-call:
+    enabled: true                # 是否启用（false 时退化为纯信令转发）
+    ring-timeout-seconds: 60     # 振铃超时（秒）
+    session-ttl-seconds: 7200    # 会话 Redis TTL（秒）
+```
+
 ## 群视频通话（混合架构：Mesh + SFU）
 
 SDK 内置群通话房间生命周期管理，服务端能力由 `gim-im-starter` 自动装配，业务方只需配置即可：
@@ -150,7 +175,7 @@ SDK 内置群通话房间生命周期管理，服务端能力由 `gim-im-starter
 - **SFU 模式**（>8 人，支持 20+）：SDK 负责房间协调与接入凭证签发（内置 LiveKit 参考实现，可通过 `SfuAdapter` SPI 对接任意 SFU），媒体流由外部 SFU 承载
 - 模式选择：`mode: auto` 时按人数自动切换，也支持固定 `mesh` / `sfu`
 
-### 信令流程（cmd=51 RtcGroup，signalType 9~16）
+### 信令流程（cmd=51 RtcGroup，signalType 9~17）
 
 | signalType | 名称 | 方向 | 说明 |
 |-----------|------|------|------|
@@ -160,10 +185,22 @@ SDK 内置群通话房间生命周期管理，服务端能力由 `gim-im-starter
 | 12 | groupCallReject | 客户端 → 服务端 | 拒绝邀请 |
 | 13 | groupCallLeave | 客户端 → 服务端 | 主动退出 |
 | 14 | groupCallEnd | 客户端 → 服务端 | 发起人结束全员通话 |
-| 15 | participantNotify | 服务端 → 客户端 | 成员变更通知（join/leave/reject/ended） |
-| 16 | roomState | 服务端 → 客户端 | 房间快照 + 成员列表 + SFU token / TURN 凭据 |
+| 15 | participantNotify | 服务端 → 客户端 | 成员变更通知（join/leave/reject/media/ended） |
+| 16 | roomState | 服务端 → 客户端 | 房间快照 + 成员列表（含摄像头/麦克风开关）+ SFU token / TURN 凭据 |
+| 17 | mediaState | 客户端 → 服务端 | 成员摄像头/麦克风开关上报，服务端广播给其他在通话成员 |
 
 Mesh 模式下的媒体信令（offer/answer/ICE，signalType 1~8）与 1:1 通话完全一致，由 `RtcGroupHandler` 扇出转发；掉线清理、邀请超时、空房间回收均由服务端自动处理。
+
+### 业务事件（话单）
+
+实现 `ImGroupCallListener` 并注册为 Spring Bean，即可收到群通话业务事件（与 1:1 的 `ImSingleCallListener` 对称）：
+
+| 事件 | 触发时机 |
+|------|---------|
+| `onCallStart` | 房间创建成功，携带 callId / groupId / roomId / 发起人 / callType / mesh\|sfu 模式 |
+| `onCallEnd` | 通话结束，携带**通话时长**与结束原因（`ended` 发起人结束 / `timeout` 邀请超时 / `empty` 空房回收） |
+| `onMemberJoin` | 成员入房（幂等重连不重复触发） |
+| `onMemberLeave` | 成员离房，原因 `leave` 主动退出 / `disconnect` 掉线清理 |
 
 ### 配置示例
 
@@ -199,6 +236,8 @@ example/src/main/java/com/example/im/
     ├── RedisSubscriberImpl.java   # Redis Pub/Sub 订阅
     ├── TokenVerifierImpl.java     # Token 验证
     ├── IdGeneratorImpl.java       # ID 生成器
+    ├── SingleCallListenerImpl.java # 1:1 通话话单回调示例
+    ├── GroupCallListenerImpl.java    # 群通话话单回调示例
     └── ImEventListenerImpl.java   # IM 事件监听
 ```
 

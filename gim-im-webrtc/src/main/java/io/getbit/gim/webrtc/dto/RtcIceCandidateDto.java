@@ -3,13 +3,15 @@ package io.getbit.gim.webrtc.dto;
 import lombok.Data;
 
 /**
- * WebRTC ICE 候选者 DTO
+ * RtcIceCandidateDto.java
+ *
+ * WebRTC ICE 候选者 DTO（1:1 与群 Mesh 共用的媒体信令）
  * 用于 iceCandidate 信令（signalType=3）
  *
  * @author gogym
  */
 @Data
-public class WebRtcIceCandidateDto {
+public class RtcIceCandidateDto {
 
     /**
      * ICE Candidate 内容

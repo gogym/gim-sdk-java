@@ -1,4 +1,4 @@
-package io.getbit.gim.webrtc.groupcall;
+package io.getbit.gim.webrtc.groupcall.config;
 
 import lombok.Getter;
 import lombok.Setter;

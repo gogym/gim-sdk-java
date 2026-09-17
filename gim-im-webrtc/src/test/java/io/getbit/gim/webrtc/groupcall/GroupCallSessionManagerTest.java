@@ -3,7 +3,11 @@ package io.getbit.gim.webrtc.groupcall;
 import io.getbit.gim.webrtc.enums.GroupCallMemberStatus;
 import io.getbit.gim.webrtc.enums.GroupCallMode;
 import io.getbit.gim.webrtc.enums.GroupCallRoomStatus;
-import io.getbit.gim.webrtc.session.WebRtcSessionManager;
+import io.getbit.gim.webrtc.groupcall.config.GroupCallConfig;
+import io.getbit.gim.webrtc.groupcall.listener.GroupCallListener;
+import io.getbit.gim.webrtc.groupcall.model.GroupCallMember;
+import io.getbit.gim.webrtc.groupcall.model.GroupCallRoom;
+import io.getbit.gim.webrtc.singlecall.SingleCallSessionManager;
 import io.getbit.gim.webrtc.sfu.SfuAdapter;
 import io.getbit.gim.webrtc.sfu.SfuToken;
 import org.junit.jupiter.api.AfterEach;
@@ -287,19 +291,19 @@ class GroupCallSessionManagerTest {
     @Test
     @DisplayName("占用判定：与 1:1 通话互斥")
     void busyCheckWithOneToOne() {
-        WebRtcSessionManager oneToOne = new WebRtcSessionManager();
-        GroupCallSessionManager m = new GroupCallSessionManager(config, null, oneToOne);
+        SingleCallSessionManager singleCall = new SingleCallSessionManager();
+        GroupCallSessionManager m = new GroupCallSessionManager(config, null, singleCall);
         try {
             // 模拟 1:1 通话占用
-            assertTrue(oneToOne.createSession("call-1", "user-a", "user-x", "video", null, null));
+            assertTrue(singleCall.createSession("call-1", "user-a", "user-x", "video", null, null));
             assertTrue(m.isUserBusy("user-a"));
 
             // 1:1 结束后可发起群通话
-            oneToOne.endSession("call-1");
+            singleCall.endSession("call-1");
             assertFalse(m.isUserBusy("user-a"));
             assertNotNull(m.createRoom("group-1", null, "user-a", "video", List.of("user-b"), GroupCallMode.MESH, null));
         } finally {
-            oneToOne.shutdown();
+            singleCall.shutdown();
             m.shutdown();
         }
     }

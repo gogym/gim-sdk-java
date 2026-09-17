@@ -39,6 +39,11 @@ public class GimProperties {
      */
     private RtcGroupCallProperties rtcGroupCall = new RtcGroupCallProperties();
 
+    /**
+     * 1:1 通话服务端会话管理配置（忙线互斥 / 振铃超时 / 掉线清理）
+     */
+    private RtcCallProperties rtcCall = new RtcCallProperties();
+
     // ==================== 心跳配置 ====================
 
     /**

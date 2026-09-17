@@ -10,7 +10,11 @@ import io.getbit.gim.protocol.codec.PacketCodec;
 import io.getbit.gim.webrtc.enums.GroupCallMemberStatus;
 import io.getbit.gim.webrtc.enums.GroupCallMode;
 import io.getbit.gim.webrtc.enums.GroupCallRoomStatus;
-import io.getbit.gim.webrtc.enums.RtcSignalType;
+import io.getbit.gim.webrtc.enums.GroupSignalType;
+import io.getbit.gim.webrtc.groupcall.listener.GroupCallListener;
+import io.getbit.gim.webrtc.groupcall.listener.ImGroupCallListener;
+import io.getbit.gim.webrtc.groupcall.model.GroupCallMember;
+import io.getbit.gim.webrtc.groupcall.model.GroupCallRoom;
 import io.getbit.gim.webrtc.sfu.SfuAdapter;
 import io.getbit.gim.webrtc.sfu.SfuToken;
 import io.getbit.gim.webrtc.sfu.TurnCredentialService;
@@ -19,12 +23,14 @@ import io.getbit.gim.webrtc.dto.GroupCallParticipantDto;
 import io.getbit.gim.webrtc.dto.GroupCallRequestDto;
 import io.getbit.gim.webrtc.dto.GroupMemberInfoDto;
 import io.getbit.gim.webrtc.dto.GroupRoomStateDto;
-import io.getbit.gim.webrtc.dto.WebRtcRejectDto;
+import io.getbit.gim.webrtc.dto.GroupMediaStateDto;
+import io.getbit.gim.webrtc.dto.SingleCallRejectDto;
 import io.getbit.gim.webrtc.util.RtcSignalValidator;
 import io.netty.channel.Channel;
 
 import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,7 +45,10 @@ import java.util.List;
  * 2. groupCallJoin(11)：成员入房 → 下发房间快照+SFU token/TURN 凭据 → 广播成员变更(15)
  * 3. groupCallReject(12)/groupCallLeave(13)：更新成员状态 → 广播成员变更(15)
  * 4. groupCallEnd(14)：仅发起人可结束 → 广播通话结束 → 销毁 SFU 房间
- * 5. 掉线清理/邀请超时：由 GroupCallListener 回调转化为成员变更广播
+ * 5. mediaState(17)：成员摄像头/麦克风开关状态更新 → 广播成员变更(15)
+ * 6. 掉线清理/邀请超时/空房回收：由 GroupCallListener 回调转化为成员变更广播
+ *
+ * 同时经 ImGroupCallListener 向业务侧发出通话开始/结束（含时长与原因）、成员进出事件
  *
  * Mesh 模式下的媒体信令（offer/answer/ICE，signalType 1~8）仍由 RtcGroupHandler 扇出转发
  *
@@ -58,15 +67,29 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
      */
     private final TurnCredentialService turnCredentialService;
 
+    /**
+     * 业务事件监听器（话单/统计），可为空列表
+     */
+    private final List<ImGroupCallListener> businessListeners;
+
     public GroupCallService(IMServerFacade facade,
                             GroupCallSessionManager sessionManager,
                             ImGroupMemberProvider groupMemberProvider,
                             TurnCredentialService turnCredentialService) {
+        this(facade, sessionManager, groupMemberProvider, turnCredentialService, Collections.emptyList());
+    }
+
+    public GroupCallService(IMServerFacade facade,
+                            GroupCallSessionManager sessionManager,
+                            ImGroupMemberProvider groupMemberProvider,
+                            TurnCredentialService turnCredentialService,
+                            List<ImGroupCallListener> businessListeners) {
         super(facade);
         this.sessionManager = sessionManager;
         this.groupMemberProvider = groupMemberProvider;
         this.turnCredentialService = turnCredentialService;
-        // 掉线清理/邀请超时事件 → 成员变更广播
+        this.businessListeners = businessListeners != null ? businessListeners : Collections.emptyList();
+        // 掉线清理/邀请超时/空房回收事件 → 成员变更广播与业务事件
         sessionManager.setListener(this);
     }
 
@@ -91,7 +114,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
     public void handle(ImProto.Packet packet, Channel channel, String userId, ImProto.RtcGroup signal) {
         try {
             int signalType = signal.getSignalType();
-            RtcSignalType type = RtcSignalType.fromCode(signalType);
+            GroupSignalType type = GroupSignalType.fromCode(signalType);
             if (type == null) {
                 log.warn("群通话未知信令类型: signalType={}, userId={}", signalType, userId);
                 return;
@@ -111,6 +134,9 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
                     break;
                 case GROUP_CALL_END:
                     handleEnd(signal, userId);
+                    break;
+                case MEDIA_STATE:
+                    handleMediaState(signal, userId);
                     break;
                 case GROUP_CALL_INVITE:
                 case PARTICIPANT_NOTIFY:
@@ -137,7 +163,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
             log.warn("群通话发起缺少群组ID: userId={}", userId);
             return;
         }
-        if (!RtcSignalValidator.validateGroupLifecyclePayload(RtcSignalType.GROUP_CALL_REQUEST.getCode(), signal.getPayload(), userId)) {
+        if (!RtcSignalValidator.validateGroupLifecyclePayload(GroupSignalType.GROUP_CALL_REQUEST.getCode(), signal.getPayload(), userId)) {
             return;
         }
 
@@ -174,6 +200,9 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
             }
         }
 
+        // 业务事件：通话发起（话单起点）
+        fireCallStart(room);
+
         // 向发起人下发房间快照
         sendRoomState(room, userId);
 
@@ -183,7 +212,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
         invite.setGroupId(groupId);
         invite.setInitiatorId(userId);
         invite.setMode(mode == GroupCallMode.SFU ? "sfu" : "mesh");
-        ImProto.RtcGroup inviteSignal = buildServerSignal(RtcSignalType.GROUP_CALL_INVITE.getCode(), room, GSON.toJson(invite));
+        ImProto.RtcGroup inviteSignal = buildServerSignal(GroupSignalType.GROUP_CALL_INVITE.getCode(), room, GSON.toJson(invite));
 
         int offlineCount = 0;
         for (GroupCallMember member : room.getMembers().values()) {
@@ -210,6 +239,9 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
             return;
         }
 
+        GroupCallMember joining = room.getMember(userId);
+        boolean alreadyJoined = joining != null && joining.isJoined();
+
         GroupCallRoom joined = sessionManager.joinRoom(room.getRoomId(), userId, channel);
         if (joined == null) {
             log.warn("加入群通话失败: roomId={}, userId={}", room.getRoomId(), userId);
@@ -221,6 +253,11 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
 
         // 广播成员加入通知给其他在通话中的成员
         broadcastParticipant(joined, "join", userId, null, userId);
+
+        // 幂等重连（重复 join）不重复触发业务加入事件
+        if (!alreadyJoined) {
+            fireMemberJoin(joined.getCallId(), joined.getRoomId(), userId);
+        }
 
         log.info("群通话成员加入: roomId={}, userId={}, joined={}",
                 joined.getRoomId(), userId, joined.getJoinedMemberIds());
@@ -262,6 +299,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
 
         String reason = parseReason(signal.getPayload());
         broadcastParticipant(room, "leave", userId, reason, userId);
+        fireMemberLeave(room.getCallId(), room.getRoomId(), userId, "leave");
 
         log.info("群通话成员退出: roomId={}, userId={}, joinedLeft={}",
                 room.getRoomId(), userId, room.getJoinedMemberIds());
@@ -295,10 +333,46 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
             }
         }
 
+        // 业务事件：发起人结束（时长已在 endRoom 时定格）
+        fireCallEnd(ended, "ended");
+
         // 广播通话结束给除发起人外的所有成员（含未响应/已退出的成员，便于客户端清理界面）
         broadcastParticipant(ended, "ended", userId, null, userId);
 
         log.info("群通话已结束: roomId={}, group={}, initiator={}", ended.getRoomId(), ended.getGroupId(), userId);
+    }
+
+    /**
+     * mediaState(17)：成员摄像头/麦克风开关状态上报
+     * 更新成员媒体状态后广播给其他在通话中的成员（复用 PARTICIPANT_NOTIFY，action=media）
+     */
+    private void handleMediaState(ImProto.RtcGroup signal, String userId) {
+        GroupCallRoom room = sessionManager.getRoom(signal.getRoomId());
+        if (room == null) {
+            log.warn("媒体开关上报失败: 房间不存在, roomId={}, userId={}", signal.getRoomId(), userId);
+            return;
+        }
+        GroupMediaStateDto media = parseMediaState(signal.getPayload());
+        if (media == null) {
+            log.warn("媒体开关上报无效: payload 缺少 camera/mic, roomId={}, userId={}", room.getRoomId(), userId);
+            return;
+        }
+        GroupCallMember member = room.getMember(userId);
+        if (member == null || !member.isJoined()) {
+            log.warn("媒体开关上报失败: 成员未在通话中, roomId={}, userId={}", room.getRoomId(), userId);
+            return;
+        }
+        if (media.getCamera() != null) {
+            member.setCamera(media.getCamera());
+        }
+        if (media.getMic() != null) {
+            member.setMic(media.getMic());
+        }
+        // 成员快照携带最新媒体开关，客户端据此刷新对端 UI
+        broadcastParticipant(room, "media", userId, null, userId);
+
+        log.debug("群通话成员媒体开关已更新: roomId={}, userId={}, camera={}, mic={}",
+                room.getRoomId(), userId, member.getCamera(), member.getMic());
     }
 
     // ====================== GroupCallListener 回调（管理器内部事件 → 广播） ======================
@@ -307,12 +381,65 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
     public void onMemberDisconnected(GroupCallRoom room, GroupCallMember member) {
         // 成员掉线 → 向仍在通话中的成员广播退出通知
         broadcastParticipant(room, "leave", member.getUserId(), "timeout", member.getUserId());
+        fireMemberLeave(room.getCallId(), room.getRoomId(), member.getUserId(), "disconnect");
     }
 
     @Override
     public void onInviteTimeout(GroupCallRoom room) {
         // 邀请超时 → 广播通话结束给除发起人外的所有成员
         broadcastParticipant(room, "ended", room.getInitiatorId(), "timeout", room.getInitiatorId());
+        fireCallEnd(room, "timeout");
+    }
+
+    @Override
+    public void onRoomRecycled(GroupCallRoom room) {
+        // 空房间回收（全员离开后无人在房，未走 endRoom 流程）→ 补发业务结束事件
+        fireCallEnd(room, "empty");
+    }
+
+    // ====================== 业务事件 ======================
+
+    private void fireCallStart(GroupCallRoom room) {
+        for (ImGroupCallListener businessListener : businessListeners) {
+            try {
+                businessListener.onCallStart(room.getCallId(), room.getGroupId(), room.getRoomId(),
+                        room.getInitiatorId(), room.getCallType(), room.getMode());
+            } catch (Exception e) {
+                log.error("群通话开始回调异常, roomId={}", room.getRoomId(), e);
+            }
+        }
+    }
+
+    private void fireCallEnd(GroupCallRoom room, String endReason) {
+        for (ImGroupCallListener businessListener : businessListeners) {
+            try {
+                businessListener.onCallEnd(room.getCallId(), room.getGroupId(), room.getRoomId(),
+                        room.getInitiatorId(), room.getCallType(), room.getMode(),
+                        room.getDurationSeconds(), endReason);
+            } catch (Exception e) {
+                log.error("群通话结束回调异常, roomId={}, endReason={}", room.getRoomId(), endReason, e);
+            }
+        }
+    }
+
+    private void fireMemberJoin(String callId, String roomId, String userId) {
+        for (ImGroupCallListener businessListener : businessListeners) {
+            try {
+                businessListener.onMemberJoin(callId, roomId, userId);
+            } catch (Exception e) {
+                log.error("群通话成员加入回调异常, roomId={}, userId={}", roomId, userId, e);
+            }
+        }
+    }
+
+    private void fireMemberLeave(String callId, String roomId, String userId, String reason) {
+        for (ImGroupCallListener businessListener : businessListeners) {
+            try {
+                businessListener.onMemberLeave(callId, roomId, userId, reason);
+            } catch (Exception e) {
+                log.error("群通话成员离开回调异常, roomId={}, userId={}, reason={}", roomId, userId, reason, e);
+            }
+        }
     }
 
     // ====================== 信令构建与投递 ======================
@@ -357,7 +484,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
             dto.setMemberCount(room.getJoinedMemberIds().size());
             dto.setMembers(toMemberInfos(room));
         }
-        return buildServerSignal(RtcSignalType.PARTICIPANT_NOTIFY.getCode(), room, GSON.toJson(dto));
+        return buildServerSignal(GroupSignalType.PARTICIPANT_NOTIFY.getCode(), room, GSON.toJson(dto));
     }
 
     /**
@@ -413,13 +540,17 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
             dto.setTurnInfo(turnCredentialService.generateTurnInfo());
         }
 
-        notifyUser(toUserId, buildServerSignal(RtcSignalType.ROOM_STATE.getCode(), room, GSON.toJson(dto)));
+        notifyUser(toUserId, buildServerSignal(GroupSignalType.ROOM_STATE.getCode(), room, GSON.toJson(dto)));
     }
 
     private List<GroupMemberInfoDto> toMemberInfos(GroupCallRoom room) {
         List<GroupMemberInfoDto> infos = new ArrayList<>();
         for (GroupCallMember member : room.getMembers().values()) {
-            infos.add(new GroupMemberInfoDto(member.getUserId(), member.getStatus().name().toLowerCase()));
+            GroupMemberInfoDto info = new GroupMemberInfoDto(
+                    member.getUserId(), member.getStatus().name().toLowerCase());
+            info.setCamera(member.getCamera());
+            info.setMic(member.getMic());
+            infos.add(info);
         }
         return infos;
     }
@@ -449,6 +580,21 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
     }
 
     /**
+     * 解析 mediaState payload：camera/mic 至少一项非 null，否则视为无效
+     */
+    private GroupMediaStateDto parseMediaState(String payload) {
+        if (payload == null || payload.isEmpty()) {
+            return null;
+        }
+        try {
+            GroupMediaStateDto dto = GSON.fromJson(payload, GroupMediaStateDto.class);
+            return dto != null && (dto.getCamera() != null || dto.getMic() != null) ? dto : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
      * 从 reject/leave payload 中解析原因（payload 可为空）
      */
     private String parseReason(String payload) {
@@ -456,7 +602,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
             return null;
         }
         try {
-            WebRtcRejectDto dto = GSON.fromJson(payload, WebRtcRejectDto.class);
+            SingleCallRejectDto dto = GSON.fromJson(payload, SingleCallRejectDto.class);
             return dto != null ? dto.getReason() : null;
         } catch (Exception e) {
             return null;

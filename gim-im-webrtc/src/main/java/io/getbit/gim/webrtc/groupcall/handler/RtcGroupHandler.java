@@ -1,4 +1,4 @@
-package io.getbit.gim.webrtc.handler;
+package io.getbit.gim.webrtc.groupcall.handler;
 
 import io.getbit.gim.core.bootstrap.IMServerFacade;
 import io.getbit.gim.core.message.handler.BaseHandler;
@@ -6,8 +6,8 @@ import io.getbit.gim.core.spi.ImGroupMemberProvider;
 import io.getbit.gim.protocol.codec.Cmd;
 import io.getbit.gim.protocol.codec.ImProto;
 import io.getbit.gim.protocol.codec.PacketCodec;
-import io.getbit.gim.webrtc.enums.RtcSignalType;
 import io.getbit.gim.webrtc.groupcall.GroupCallService;
+import io.getbit.gim.webrtc.enums.GroupSignalType;
 import io.getbit.gim.webrtc.util.RtcSignalValidator;
 import io.netty.channel.Channel;
 
@@ -22,7 +22,7 @@ import java.util.List;
  * 职责分拆：
  * 1. signalType 1~8（媒体信令 offer/answer/ICE 等）：扇出转发给群内所有成员（排除发送者），
  *    Mesh 模式下成员间 P2P 建连使用
- * 2. signalType 9~16（群通话生命周期信令）：委派给 GroupCallService 处理
+ * 2. signalType 9~17（群通话生命周期与媒体开关信令）：委派给 GroupCallService 处理
  *
  * 扇出策略：
  * 1. 解析 RtcGroup，获取群成员列表
@@ -38,7 +38,7 @@ public class RtcGroupHandler extends BaseHandler {
     private final ImGroupMemberProvider groupMemberProvider;
 
     /**
-     * 群通话生命周期服务（signalType 9~16），未启用群通话时为 null
+     * 群通话生命周期服务（signalType 9~17），未启用群通话时为 null
      */
     private final GroupCallService groupCallService;
 
@@ -66,8 +66,8 @@ public class RtcGroupHandler extends BaseHandler {
             ImProto.RtcGroup rtcGroup = PacketCodec.parseRtcGroup(packet);
             String groupId = rtcGroup.getGroupId();
 
-            // 群通话生命周期信令（signalType 9~16）委派给 GroupCallService
-            if (rtcGroup.getSignalType() >= RtcSignalType.GROUP_CALL_REQUEST.getCode()) {
+            // 群通话生命周期与媒体开关信令（signalType 9~17）委派给 GroupCallService
+            if (rtcGroup.getSignalType() >= GroupSignalType.GROUP_CALL_REQUEST.getCode()) {
                 if (groupCallService != null) {
                     groupCallService.handle(packet, channel, userId, rtcGroup);
                 } else {

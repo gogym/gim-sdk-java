@@ -8,9 +8,13 @@ import io.getbit.gim.core.connection.server.NettyServer;
 import io.getbit.gim.core.message.handler.BaseHandler;
 import io.getbit.gim.core.spi.*;
 import io.getbit.gim.webrtc.groupcall.GroupCallService;
+import io.getbit.gim.webrtc.groupcall.listener.ImGroupCallListener;
 import io.getbit.gim.webrtc.groupcall.GroupCallSessionManager;
-import io.getbit.gim.webrtc.handler.RtcGroupHandler;
-import io.getbit.gim.webrtc.handler.RtcSignalHandler;
+import io.getbit.gim.webrtc.groupcall.handler.RtcGroupHandler;
+import io.getbit.gim.webrtc.singlecall.handler.RtcSingleHandler;
+import io.getbit.gim.webrtc.singlecall.listener.ImSingleCallListener;
+import io.getbit.gim.webrtc.singlecall.SingleCallService;
+import io.getbit.gim.webrtc.singlecall.SingleCallSessionManager;
 import io.getbit.gim.webrtc.sfu.TurnCredentialService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -57,6 +61,9 @@ public class GimAutoConfiguration {
                                                      ObjectProvider<ImFriendProvider> friendProviderProvider,
                                                      ObjectProvider<List<ImEventListener>> eventListenersProvider,
                                                      ObjectProvider<GroupCallSessionManager> groupCallManagerProvider,
+                                                     ObjectProvider<SingleCallSessionManager> singleCallSessionManagerProvider,
+                                                     ObjectProvider<List<ImSingleCallListener>> callListenersProvider,
+                                                     ObjectProvider<List<ImGroupCallListener>> groupCallListenersProvider,
                                                      ObjectProvider<TurnCredentialService> turnCredentialServiceProvider) {
         GimBootstrap.Builder builder = GimBootstrap.builder()
                 .config(config)
@@ -87,16 +94,31 @@ public class GimAutoConfiguration {
         // RTC Handler 后置注册钩子
         ImGroupMemberProvider rtcGroupProvider = groupMemberProviderProvider.getIfAvailable();
         GroupCallSessionManager groupCallManager = groupCallManagerProvider.getIfAvailable();
+        SingleCallSessionManager singleCallManager = singleCallSessionManagerProvider.getIfAvailable();
+        List<ImSingleCallListener> callListeners = callListenersProvider.getIfAvailable(Collections::emptyList);
+        List<ImGroupCallListener> groupCallListeners = groupCallListenersProvider.getIfAvailable(Collections::emptyList);
         TurnCredentialService turnCredentialService = turnCredentialServiceProvider.getIfAvailable();
         builder.postBuildHook(facade -> {
             List<BaseHandler> rtcHandlers = new ArrayList<>();
+
+            // 1:1 通话生命周期服务：忙线互斥/会话推进/振铃超时/掉线清理/业务事件回调
+            // （gim.rtc-call.enabled=false 或未装配 SingleCallSessionManager 时为 null，RtcSingleHandler 退化为纯转发）
+            SingleCallService singleCallService = null;
+            if (singleCallManager != null && config.getRtcCall().isEnabled()) {
+                singleCallService = new SingleCallService(
+                        facade, singleCallManager, groupCallManager, idGenerator, callListeners);
+                // 用户全部设备离线时清理其进行中的 1:1 通话并通知对端
+                facade.registerCloseListener(singleCallManager::endSessionsByUser);
+            }
             // 单聊信令转发 + 通话建立信令注入 TURN 凭证（服务未配置 turn 时为 null，退化为纯转发）
-            rtcHandlers.add(new RtcSignalHandler(facade, turnCredentialService));
+            rtcHandlers.add(new RtcSingleHandler(facade, turnCredentialService, singleCallService));
+
             if (rtcGroupProvider != null) {
                 GroupCallService groupCallService = null;
                 if (groupCallManager != null) {
                     // 群通话生命周期信令处理 + 掉线清理（用户全部设备离线时回收房间成员）
-                    groupCallService = new GroupCallService(facade, groupCallManager, rtcGroupProvider, turnCredentialService);
+                    groupCallService = new GroupCallService(facade, groupCallManager, rtcGroupProvider,
+                            turnCredentialService, groupCallListeners);
                     facade.registerCloseListener(groupCallManager::onDisconnect);
                 }
                 rtcHandlers.add(new RtcGroupHandler(facade, rtcGroupProvider, groupCallService));

@@ -53,6 +53,12 @@ gim:
       shared-secret: secret             # TURN 共享密钥
       credential-ttl: 3600              # 凭证有效期（秒）
 
+  # ==================== 1:1 通话（服务端会话管理） ====================
+  rtc-call:
+    enabled: true                # 是否启用 1:1 通话生命周期管理（忙线互斥/振铃超时/掉线清理），false 时退化为纯信令转发
+    ring-timeout-seconds: 60     # 振铃超时：无应答自动结束会话并通知主叫
+    session-ttl-seconds: 7200    # 通话会话 Redis TTL（集群模式下会话元数据可见窗口）
+
   # ==================== 群视频通话（混合架构：Mesh + SFU） ====================
   rtc-group-call:
     enabled: true                # 是否启用群通话

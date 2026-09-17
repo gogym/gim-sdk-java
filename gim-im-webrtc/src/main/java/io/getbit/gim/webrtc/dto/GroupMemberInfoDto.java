@@ -19,6 +19,16 @@ public class GroupMemberInfoDto {
      */
     private String status;
 
+    /**
+     * 摄像头开关状态（null 表示未上报）
+     */
+    private Boolean camera;
+
+    /**
+     * 麦克风开关状态（null 表示未上报）
+     */
+    private Boolean mic;
+
     public GroupMemberInfoDto() {
     }
 

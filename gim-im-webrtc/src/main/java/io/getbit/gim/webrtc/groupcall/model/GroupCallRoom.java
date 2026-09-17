@@ -1,4 +1,4 @@
-package io.getbit.gim.webrtc.groupcall;
+package io.getbit.gim.webrtc.groupcall.model;
 
 import io.getbit.gim.webrtc.enums.GroupCallMode;
 import io.getbit.gim.webrtc.enums.GroupCallRoomStatus;
@@ -46,6 +46,11 @@ public class GroupCallRoom {
      */
     private volatile long talkTime;
 
+    /**
+     * 房间结束时间（毫秒，未结束为 0）
+     */
+    private volatile long endTime;
+
     public GroupCallRoom(String roomId, String callId, String groupId, String initiatorId,
                          GroupCallMode mode, String callType) {
         this.roomId = roomId;
@@ -58,12 +63,20 @@ public class GroupCallRoom {
         this.createTime = System.currentTimeMillis();
     }
 
-    void setStatus(GroupCallRoomStatus status) {
+    /**
+     * 以下状态变更方法仅供 GroupCallSessionManager 生命周期管理调用
+     *（model 子包与管理器跨包，包级私有不可见，故声明为 public）
+     */
+    public void setStatus(GroupCallRoomStatus status) {
         this.status = status;
     }
 
-    void setTalkTime(long talkTime) {
+    public void setTalkTime(long talkTime) {
         this.talkTime = talkTime;
+    }
+
+    public void setEndTime(long endTime) {
+        this.endTime = endTime;
     }
 
     public GroupCallMember getMember(String userId) {
@@ -107,7 +120,7 @@ public class GroupCallRoom {
         if (talkTime <= 0) {
             return 0;
         }
-        long end = status == GroupCallRoomStatus.ENDED ? 0 : System.currentTimeMillis();
-        return (end > 0 ? end - talkTime : 0) / 1000;
+        long end = endTime > 0 ? endTime : System.currentTimeMillis();
+        return (end - talkTime) / 1000;
     }
 }

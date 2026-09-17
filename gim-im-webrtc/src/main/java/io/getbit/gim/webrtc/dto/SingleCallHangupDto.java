@@ -3,13 +3,15 @@ package io.getbit.gim.webrtc.dto;
 import lombok.Data;
 
 /**
- * WebRTC 挂断 DTO
+ * SingleCallHangupDto.java
+ *
+ * 1:1 通话挂断 DTO
  * 用于 callHangup 信令（signalType=8）
  *
  * @author gogym
  */
 @Data
-public class WebRtcHangupDto {
+public class SingleCallHangupDto {
 
     /**
      * 挂断原因

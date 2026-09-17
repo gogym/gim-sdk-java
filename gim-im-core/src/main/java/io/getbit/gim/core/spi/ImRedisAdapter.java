@@ -28,6 +28,19 @@ public interface ImRedisAdapter {
     String get(String key);
 
     /**
+     * SET NX with expiration（原子占位）
+     * 默认返回 false 表示未实现，调用方将降级为 GET + SETEX 的非原子占位（存在极小竞态窗口）
+     *
+     * @param key     Redis key
+     * @param value   value
+     * @param seconds TTL in seconds
+     * @return true=占位成功, false=key 已存在或实现方不支持
+     */
+    default boolean setnx(String key, String value, int seconds) {
+        return false;
+    }
+
+    /**
      * DELETE
      *
      * @param key Redis key

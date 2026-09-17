@@ -1,9 +1,14 @@
 package io.getbit.gim.webrtc.groupcall;
 
+import io.getbit.gim.core.util.GimThreads;
 import io.getbit.gim.webrtc.enums.GroupCallMemberStatus;
 import io.getbit.gim.webrtc.enums.GroupCallMode;
 import io.getbit.gim.webrtc.enums.GroupCallRoomStatus;
-import io.getbit.gim.webrtc.session.WebRtcSessionManager;
+import io.getbit.gim.webrtc.groupcall.config.GroupCallConfig;
+import io.getbit.gim.webrtc.groupcall.listener.GroupCallListener;
+import io.getbit.gim.webrtc.groupcall.model.GroupCallMember;
+import io.getbit.gim.webrtc.groupcall.model.GroupCallRoom;
+import io.getbit.gim.webrtc.singlecall.SingleCallSessionManager;
 import io.getbit.gim.webrtc.sfu.SfuAdapter;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -63,13 +67,9 @@ public class GroupCallSessionManager {
     /**
      * 1:1 通话会话管理器（用于群通话与 1:1 通话的互斥占用判定，可为 null）
      */
-    private final WebRtcSessionManager oneToOneSessions;
+    private final SingleCallSessionManager singleCallSessions;
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, r -> {
-        Thread t = new Thread(r, "gim-group-call");
-        t.setDaemon(true);
-        return t;
-    });
+    private final ScheduledExecutorService scheduler = GimThreads.singleDaemonScheduler("gim-group-call");
 
     @Setter
     private volatile GroupCallListener listener;
@@ -83,10 +83,10 @@ public class GroupCallSessionManager {
     }
 
     public GroupCallSessionManager(GroupCallConfig config, SfuAdapter sfuAdapter,
-                                   WebRtcSessionManager oneToOneSessions) {
+                                   SingleCallSessionManager singleCallSessions) {
         this.config = config != null ? config : new GroupCallConfig();
         this.sfuAdapter = sfuAdapter;
-        this.oneToOneSessions = oneToOneSessions;
+        this.singleCallSessions = singleCallSessions;
     }
 
     // ====================== 房间生命周期 ======================
@@ -256,6 +256,7 @@ public class GroupCallSessionManager {
         cancelInviteTimeout(roomId);
         cancelEmptyRoomCleanup(roomId);
 
+        room.setEndTime(System.currentTimeMillis());
         room.setStatus(GroupCallRoomStatus.ENDED);
         for (GroupCallMember member : room.getMembers().values()) {
             userRoomMap.remove(member.getUserId(), roomId);
@@ -332,7 +333,7 @@ public class GroupCallSessionManager {
         if (userRoomMap.containsKey(userId)) {
             return true;
         }
-        return oneToOneSessions != null && oneToOneSessions.isInCall(userId);
+        return singleCallSessions != null && singleCallSessions.isInCall(userId);
     }
 
     public int getRoomCount() {
@@ -401,13 +402,26 @@ public class GroupCallSessionManager {
         cancelEmptyRoomCleanup(room.getRoomId());
         int ttl = Math.max(1, config.getEmptyRoomTtlSeconds());
         ScheduledFuture<?> future = scheduler.schedule(() -> {
+            boolean recycled = false;
             synchronized (this) {
                 GroupCallRoom current = rooms.get(room.getRoomId());
                 // 期间有成员重新加入或房间已结束则跳过回收
                 if (current != null && !current.hasJoinedMember()) {
                     rooms.remove(room.getRoomId());
                     emptyRoomTasks.remove(room.getRoomId());
-                    log.info("空群通话房间已回收: roomId={}", room.getRoomId());
+                    recycled = true;
+                }
+            }
+            if (recycled) {
+                log.info("空群通话房间已回收: roomId={}", room.getRoomId());
+                // 该路径不走 endRoom，在锁外通知上层补发业务结束事件
+                GroupCallListener l = listener;
+                if (l != null) {
+                    try {
+                        l.onRoomRecycled(room);
+                    } catch (Exception e) {
+                        log.error("群通话空房回收事件回调异常", e);
+                    }
                 }
             }
         }, ttl, TimeUnit.SECONDS);

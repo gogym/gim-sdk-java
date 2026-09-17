@@ -1,4 +1,7 @@
-package io.getbit.gim.webrtc.groupcall;
+package io.getbit.gim.webrtc.groupcall.listener;
+
+import io.getbit.gim.webrtc.groupcall.model.GroupCallMember;
+import io.getbit.gim.webrtc.groupcall.model.GroupCallRoom;
 
 /**
  * GroupCallListener.java
@@ -27,5 +30,14 @@ public interface GroupCallListener {
      * @param room 已结束的房间
      */
     default void onInviteTimeout(GroupCallRoom room) {
+    }
+
+    /**
+     * 空房间回收：全员离开且超过 emptyRoomTtlSeconds 无人在房时触发
+     * 该路径不走 endRoom 流程，需单独通知上层补发业务事件
+     *
+     * @param room 被回收的房间
+     */
+    default void onRoomRecycled(GroupCallRoom room) {
     }
 }

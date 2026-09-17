@@ -30,4 +30,20 @@ public class CacheKeyBuilder {
     public static String healthProbe() {
         return PREFIX + "health_probe";
     }
+
+    // ====================== WebRTC 通话 ======================
+
+    /**
+     * 1:1 通话会话 key（值为会话 JSON 快照，不含节点本地 Channel）
+     */
+    public static String rtcCall(String callId) {
+        return PREFIX + "rtc:call:" + callId;
+    }
+
+    /**
+     * 用户通话占用占位 key（值为 callId，用于忙线互斥）
+     */
+    public static String rtcBusy(String userId) {
+        return PREFIX + "rtc:busy:" + userId;
+    }
 }
