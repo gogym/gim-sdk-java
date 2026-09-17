@@ -8,7 +8,7 @@ import java.util.List;
  * GroupRoomStateDto.java
  *
  * WebRTC 群通话房间状态 DTO
- * 用于 roomState 信令（signalType=16，服务端 → 发起人/加入者）
+ * 用于 roomState 信令（signalType=27，服务端 → 发起人/加入者）
  * 加入者据此初始化客户端房间视图：Mesh 模式下对成员逐一建连，SFU 模式下用 token 连接 SFU
  *
  * @author gogym

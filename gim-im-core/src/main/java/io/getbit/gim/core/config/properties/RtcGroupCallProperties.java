@@ -16,7 +16,7 @@ import lombok.Setter;
 public class RtcGroupCallProperties {
 
     /**
-     * 是否启用群通话（signalType 9~16 生命周期信令处理）
+     * 是否启用群通话（signalType 20~27 生命周期信令处理）
      */
     private boolean enabled = true;
 

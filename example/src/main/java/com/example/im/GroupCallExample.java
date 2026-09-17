@@ -18,18 +18,18 @@ import io.getbit.gim.webrtc.dto.GroupCallRequestDto;
  * 信令时序（signalType 见 ImProto.proto 枚举注释）：
  *
  *   发起人(A)                服务端                   被邀成员(B/C)
- *      |--- groupCallRequest(9) -->|                       |
- *      |<-- roomState(16) ---------|  (房间快照，发起人回执) |
- *      |                           |--- groupCallInvite(10) -->|
- *      |                           |<-- groupCallJoin(11) ------|  (B接受)
- *      |<-- participantNotify(15) -|   (join 通知)   |<-- roomState(16) --|
+ *      |--- groupCallRequest(20) -->|                       |
+ *      |<-- roomState(27) ---------|  (房间快照，发起人回执) |
+ *      |                           |--- groupCallInvite(21) -->|
+ *      |                           |<-- groupCallJoin(22) ------|  (B接受)
+ *      |<-- participantNotify(26) -|   (join 通知)   |<-- roomState(27) --|
  *      |<== RTC_SIGNAL / RtcGroup 扇出 offer/answer/ICE (Mesh 模式) ==>|
- *      |                           |<-- mediaState(17) ---------|  (B关闭摄像头)
- *      |<-- participantNotify(15) -|   (media 通知)              |
- *      |                           |<-- groupCallLeave(13) ------|  (B退出)
- *      |<-- participantNotify(15) -|   (leave 通知)              |
- *      |--- groupCallEnd(14) ----->|  (仅发起人可结束)            |
- *      |                           |--- participantNotify(15, ended) -->|
+ *      |                           |<-- mediaState(100) ---------|  (B关闭摄像头)
+ *      |<-- participantNotify(26) -|   (media 通知)              |
+ *      |                           |<-- groupCallLeave(24) ------|  (B退出)
+ *      |<-- participantNotify(26) -|   (leave 通知)              |
+ *      |--- groupCallEnd(25) ----->|  (仅发起人可结束)            |
+ *      |                           |--- participantNotify(26, ended) -->|
  *
  * 媒体架构：
  * - Mesh（≤8 人）：成员间 P2P 直连，offer/answer/ICE 走现有 RTC_SIGNAL/RtcGroup 扇出
@@ -53,7 +53,7 @@ public class GroupCallExample {
         request.setInviteeIds(java.util.List.of("user-b", "user-c"));
 
         ImProto.RtcGroup groupCallRequest = ImProto.RtcGroup.newBuilder()
-                .setSignalType(9)               // groupCallRequest
+                .setSignalType(20)               // groupCallRequest
                 .setSenderId("user-a")
                 .setGroupId("group-001")
                 .setCallId(java.util.UUID.randomUUID().toString()) // 客户端生成，服务端沿用
@@ -64,16 +64,16 @@ public class GroupCallExample {
                 + PacketCodec.create(Cmd.RTC_GROUP, 1, groupCallRequest));
 
         // ==================== 2. 接受邀请（客户端 B → 服务端） ====================
-        // roomId 来自服务端下发的 groupCallInvite(10) 信令
+        // roomId 来自服务端下发的 groupCallInvite(21) 信令
         ImProto.RtcGroup groupCallJoin = ImProto.RtcGroup.newBuilder()
-                .setSignalType(11)              // groupCallJoin
+                .setSignalType(22)              // groupCallJoin
                 .setSenderId("user-b")
                 .setGroupId("group-001")
                 .setRoomId("room-uuid-from-invite")
                 .build();
         System.out.println("[B→S] groupCallJoin: "
                 + PacketCodec.create(Cmd.RTC_GROUP, 2, groupCallJoin));
-        // 服务端回应 roomState(16)：房间快照 + 成员列表；
+        // 服务端回应 roomState(27)：房间快照 + 成员列表；
         // Mesh 模式附带 turnInfo（TURN/STUN 凭据），SFU 模式附带 sfuToken/sfuUrl
 
         // ==================== 3. 媒体信令（Mesh 模式，成员间） ====================
@@ -90,12 +90,12 @@ public class GroupCallExample {
         System.out.println("[B→S] offer(扇出至房间成员): "
                 + PacketCodec.create(Cmd.RTC_SIGNAL, 3, offer));
 
-        // ==================== 4. 媒体开关上报（客户端 B → 服务端，signalType=17） ====================
+        // ==================== 4. 媒体开关上报（客户端 B → 服务端，signalType=100） ====================
         // payload 的 camera/mic 至少一项非 null（null 表示该项未变化）；
-        // 服务端更新成员状态后广播 participantNotify(15, action=media) 给其他在通话成员，
-        // 房间快照 roomState(16) 的成员列表亦携带最新开关状态
+        // 服务端更新成员状态后广播 participantNotify(26, action=media) 给其他在通话成员，
+        // 房间快照 roomState(27) 的成员列表亦携带最新开关状态
         ImProto.RtcGroup mediaState = ImProto.RtcGroup.newBuilder()
-                .setSignalType(17)              // mediaState
+                .setSignalType(100)              // mediaState
                 .setSenderId("user-b")
                 .setGroupId("group-001")
                 .setRoomId("room-uuid-from-invite")
@@ -106,7 +106,7 @@ public class GroupCallExample {
 
         // ==================== 5. 退出 / 结束 ====================
         ImProto.RtcGroup leave = ImProto.RtcGroup.newBuilder()
-                .setSignalType(13)              // groupCallLeave
+                .setSignalType(24)              // groupCallLeave
                 .setSenderId("user-b")
                 .setGroupId("group-001")
                 .setRoomId("room-uuid-from-invite")
@@ -116,7 +116,7 @@ public class GroupCallExample {
                 + PacketCodec.create(Cmd.RTC_GROUP, 4, leave));
 
         ImProto.RtcGroup end = ImProto.RtcGroup.newBuilder()
-                .setSignalType(14)              // groupCallEnd（仅发起人可调用）
+                .setSignalType(25)              // groupCallEnd（仅发起人可调用）
                 .setSenderId("user-a")
                 .setGroupId("group-001")
                 .setRoomId("room-uuid-from-invite")
@@ -125,8 +125,8 @@ public class GroupCallExample {
                 + PacketCodec.create(Cmd.RTC_GROUP, 6, end));
 
         // ==================== 6. 服务端主动触发的信令 ====================
-        // - 成员掉线：服务端通过 ConnectionCloseListener 清理并广播 participantNotify(15, leave/timeout)
-        // - 邀请超时（invite-timeout-seconds）：RINGING 房间自动结束并广播 participantNotify(15, ended/timeout)
+        // - 成员掉线：服务端通过 ConnectionCloseListener 清理并广播 participantNotify(26, leave/timeout)
+        // - 邀请超时（invite-timeout-seconds）：RINGING 房间自动结束并广播 participantNotify(26, ended/timeout)
         // - 空房间回收（empty-room-ttl-seconds）：全员离开后延迟销毁房间
     }
 }

@@ -175,19 +175,19 @@ SDK 内置群通话房间生命周期管理，服务端能力由 `gim-im-starter
 - **SFU 模式**（>8 人，支持 20+）：SDK 负责房间协调与接入凭证签发（内置 LiveKit 参考实现，可通过 `SfuAdapter` SPI 对接任意 SFU），媒体流由外部 SFU 承载
 - 模式选择：`mode: auto` 时按人数自动切换，也支持固定 `mesh` / `sfu`
 
-### 信令流程（cmd=51 RtcGroup，signalType 9~17）
+### 信令流程（cmd=51 RtcGroup，signalType 20~27，mediaState=100 与 1:1 共用）
 
 | signalType | 名称 | 方向 | 说明 |
 |-----------|------|------|------|
-| 9 | groupCallRequest | 客户端 → 服务端 | 发起群通话，payload 携带 callType、可选 inviteeIds |
-| 10 | groupCallInvite | 服务端 → 成员 | 逐成员下发邀请 |
-| 11 | groupCallJoin | 客户端 → 服务端 | 加入房间，回应 roomState(16) |
-| 12 | groupCallReject | 客户端 → 服务端 | 拒绝邀请 |
-| 13 | groupCallLeave | 客户端 → 服务端 | 主动退出 |
-| 14 | groupCallEnd | 客户端 → 服务端 | 发起人结束全员通话 |
-| 15 | participantNotify | 服务端 → 客户端 | 成员变更通知（join/leave/reject/media/ended） |
-| 16 | roomState | 服务端 → 客户端 | 房间快照 + 成员列表（含摄像头/麦克风开关）+ SFU token / TURN 凭据 |
-| 17 | mediaState | 客户端 → 服务端 | 成员摄像头/麦克风开关上报，服务端广播给其他在通话成员 |
+| 20 | groupCallRequest | 客户端 → 服务端 | 发起群通话，payload 携带 callType、可选 inviteeIds |
+| 21 | groupCallInvite | 服务端 → 成员 | 逐成员下发邀请 |
+| 22 | groupCallJoin | 客户端 → 服务端 | 加入房间，回应 roomState(27) |
+| 23 | groupCallReject | 客户端 → 服务端 | 拒绝邀请 |
+| 24 | groupCallLeave | 客户端 → 服务端 | 主动退出 |
+| 25 | groupCallEnd | 客户端 → 服务端 | 发起人结束全员通话 |
+| 26 | participantNotify | 服务端 → 客户端 | 成员变更通知（join/leave/reject/media/ended） |
+| 27 | roomState | 服务端 → 客户端 | 房间快照 + 成员列表（含摄像头/麦克风开关）+ SFU token / TURN 凭据 |
+| 100 | mediaState | 客户端 → 服务端 | 成员摄像头/麦克风开关上报（独立高位编号、与 1:1 共用），服务端广播给其他在通话成员 |
 
 Mesh 模式下的媒体信令（offer/answer/ICE，signalType 1~8）与 1:1 通话完全一致，由 `RtcGroupHandler` 扇出转发；掉线清理、邀请超时、空房间回收均由服务端自动处理。
 

@@ -36,16 +36,16 @@ import java.util.List;
 /**
  * GroupCallService.java
  *
- * WebRTC 群通话生命周期服务（signalType 9~16）
- * 由 RtcGroupHandler 在收到 cmd=51 且 signalType ≥ 9 时委派调用（继承 BaseHandler 仅为复用路由能力，
+ * WebRTC 群通话生命周期服务（signalType 20~27 与 mediaState=100）
+ * 由 RtcGroupHandler 在收到 cmd=51 且 signalType 属于群通话信令（GroupSignalType 已定义类型）时委派调用（继承 BaseHandler 仅为复用路由能力，
  * 自身不注册进 MessageDispatcher，避免与 RtcGroupHandler 的 cmd 冲突）
  *
  * 职责：
- * 1. groupCallRequest(9)：创建房间 → 下发 roomState(16) 给发起人 → 逐成员下发邀请(10)
- * 2. groupCallJoin(11)：成员入房 → 下发房间快照+SFU token/TURN 凭据 → 广播成员变更(15)
- * 3. groupCallReject(12)/groupCallLeave(13)：更新成员状态 → 广播成员变更(15)
- * 4. groupCallEnd(14)：仅发起人可结束 → 广播通话结束 → 销毁 SFU 房间
- * 5. mediaState(17)：成员摄像头/麦克风开关状态更新 → 广播成员变更(15)
+ * 1. groupCallRequest(20)：创建房间 → 下发 roomState(27) 给发起人 → 逐成员下发邀请(21)
+ * 2. groupCallJoin(22)：成员入房 → 下发房间快照+SFU token/TURN 凭据 → 广播成员变更(26)
+ * 3. groupCallReject(23)/groupCallLeave(24)：更新成员状态 → 广播成员变更(26)
+ * 4. groupCallEnd(25)：仅发起人可结束 → 广播通话结束 → 销毁 SFU 房间
+ * 5. mediaState(100)：成员摄像头/麦克风开关状态更新 → 广播成员变更(26)
  * 6. 掉线清理/邀请超时/空房回收：由 GroupCallListener 回调转化为成员变更广播
  *
  * 同时经 ImGroupCallListener 向业务侧发出通话开始/结束（含时长与原因）、成员进出事件
@@ -155,7 +155,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
     // ====================== 信令处理 ======================
 
     /**
-     * groupCallRequest(9)：发起群通话
+     * groupCallRequest(20)：发起群通话
      */
     private void handleGroupCallRequest(ImProto.RtcGroup signal, Channel channel, String userId) {
         String groupId = signal.getGroupId();
@@ -230,7 +230,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
     }
 
     /**
-     * groupCallJoin(11)：成员加入群通话
+     * groupCallJoin(22)：成员加入群通话
      */
     private void handleJoin(ImProto.RtcGroup signal, Channel channel, String userId) {
         GroupCallRoom room = sessionManager.getRoom(signal.getRoomId());
@@ -264,7 +264,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
     }
 
     /**
-     * groupCallReject(12)：成员拒绝邀请
+     * groupCallReject(23)：成员拒绝邀请
      */
     private void handleReject(ImProto.RtcGroup signal, String userId) {
         GroupCallRoom room = sessionManager.getRoom(signal.getRoomId());
@@ -284,10 +284,10 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
     }
 
     /**
-     * groupCallLeave(13)：成员退出群通话
+     * groupCallLeave(24)：成员退出群通话
      */
     private void handleLeave(ImProto.RtcGroup signal, String userId) {
-        GroupCallRoom room = sessionManager.getRoom(signal.getRoomId());
+        GroupCallRoom room = resolveRoom(signal, userId);
         if (room == null) {
             return;
         }
@@ -306,10 +306,10 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
     }
 
     /**
-     * groupCallEnd(14)：发起人结束全员通话
+     * groupCallEnd(25)：发起人结束全员通话
      */
     private void handleEnd(ImProto.RtcGroup signal, String userId) {
-        GroupCallRoom room = sessionManager.getRoom(signal.getRoomId());
+        GroupCallRoom room = resolveRoom(signal, userId);
         if (room == null) {
             return;
         }
@@ -343,7 +343,20 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
     }
 
     /**
-     * mediaState(17)：成员摄像头/麦克风开关状态上报
+     * 解析待操作房间：优先按信令 roomId 定位；roomId 为空时回退按用户当前占用房间解析。
+     * 覆盖发起人在 ROOM_STATE 回传到达前即取消/退出的竞态（createRoom 时已建立 userId→roomId 映射），
+     * 避免占用残留导致后续发起被误判忙线。roomId 非空但房间不存在时维持原语义（视为已结束，不回退）
+     */
+    private GroupCallRoom resolveRoom(ImProto.RtcGroup signal, String userId) {
+        String roomId = signal.getRoomId();
+        if (roomId != null && !roomId.isEmpty()) {
+            return sessionManager.getRoom(roomId);
+        }
+        return sessionManager.getRoomByUser(userId);
+    }
+
+    /**
+     * mediaState(100)：成员摄像头/麦克风开关状态上报
      * 更新成员媒体状态后广播给其他在通话中的成员（复用 PARTICIPANT_NOTIFY，action=media）
      */
     private void handleMediaState(ImProto.RtcGroup signal, String userId) {

@@ -6,7 +6,7 @@ import lombok.Data;
  * GroupCallInviteDto.java
  *
  * WebRTC 群通话邀请 DTO
- * 用于 groupCallInvite 信令（signalType=10，服务端 → 被邀成员）
+ * 用于 groupCallInvite 信令（signalType=21，服务端 → 被邀成员）
  *
  * @author gogym
  */

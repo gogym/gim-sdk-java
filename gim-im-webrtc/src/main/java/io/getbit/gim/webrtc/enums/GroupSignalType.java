@@ -5,8 +5,9 @@ import lombok.Getter;
 /**
  * GroupSignalType.java
  *
- * 群通话信令类型枚举（signalType 9~17，与客户端及 ImProto.proto 注释保持一致）
- * 1:1 通话信令（1~8）见 {@link SingleSignalType}，二者共用同一数值空间但职责分离
+ * 群通话信令类型枚举（signalType 20~27 生命周期信令，28~99 预留给群通话后续扩展；
+ * 媒体开关 mediaState=100 为跨场景独立高位编号、与 1:1 共用，与客户端及 ImProto.proto 注释保持一致）
+ * 1:1 通话信令（1~9，10~19 预留）见 {@link SingleSignalType}，二者共用同一数值空间但职责分离
  *
  * @author gogym
  */
@@ -16,47 +17,47 @@ public enum GroupSignalType {
     /**
      * 群通话发起
      */
-    GROUP_CALL_REQUEST(9),
+    GROUP_CALL_REQUEST(20),
 
     /**
      * 群通话邀请（服务端下发）
      */
-    GROUP_CALL_INVITE(10),
+    GROUP_CALL_INVITE(21),
 
     /**
      * 群通话加入
      */
-    GROUP_CALL_JOIN(11),
+    GROUP_CALL_JOIN(22),
 
     /**
      * 群通话拒绝
      */
-    GROUP_CALL_REJECT(12),
+    GROUP_CALL_REJECT(23),
 
     /**
      * 群通话离开
      */
-    GROUP_CALL_LEAVE(13),
+    GROUP_CALL_LEAVE(24),
 
     /**
      * 群通话结束
      */
-    GROUP_CALL_END(14),
+    GROUP_CALL_END(25),
 
     /**
      * 成员变更通知（服务端下发）
      */
-    PARTICIPANT_NOTIFY(15),
+    PARTICIPANT_NOTIFY(26),
 
     /**
      * 房间状态快照（服务端下发）
      */
-    ROOM_STATE(16),
+    ROOM_STATE(27),
 
     /**
      * 媒体开关状态（成员切换摄像头/麦克风时上报，服务端广播给其他在通话成员）
      */
-    MEDIA_STATE(17);
+    MEDIA_STATE(100);
 
     private final int code;
 

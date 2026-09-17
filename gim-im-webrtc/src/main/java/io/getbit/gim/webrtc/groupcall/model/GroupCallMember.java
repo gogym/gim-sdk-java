@@ -24,12 +24,12 @@ public class GroupCallMember {
     private long joinTime;
 
     /**
-     * 摄像头开关状态（null 表示未上报，由 mediaState(17) 信令更新）
+     * 摄像头开关状态（null 表示未上报，由 mediaState(100) 信令更新）
      */
     private volatile Boolean camera;
 
     /**
-     * 麦克风开关状态（null 表示未上报，由 mediaState(17) 信令更新）
+     * 麦克风开关状态（null 表示未上报，由 mediaState(100) 信令更新）
      */
     private volatile Boolean mic;
 

@@ -151,7 +151,7 @@ class GroupCallServiceTest {
     // ====================== 媒体开关同步 ======================
 
     @Test
-    @DisplayName("mediaState(17)：更新成员摄像头/麦克风状态，未上报项保持 null")
+    @DisplayName("mediaState(100)：更新成员摄像头/麦克风状态，未上报项保持 null")
     void mediaStateUpdatesMember() {
         String roomId = startRoom("g1", "u1");
         service.handle(null, null, "u2", group(GroupSignalType.GROUP_CALL_JOIN, "u2", "g1", roomId, null));
@@ -169,7 +169,7 @@ class GroupCallServiceTest {
     }
 
     @Test
-    @DisplayName("mediaState(17)：非成员/房间不存在/无效 payload 时忽略，不抛异常")
+    @DisplayName("mediaState(100)：非成员/房间不存在/无效 payload 时忽略，不抛异常")
     void mediaStateIgnoresInvalid() {
         String roomId = startRoom("g2", "u1");
 
@@ -186,12 +186,12 @@ class GroupCallServiceTest {
     }
 
     @Test
-    @DisplayName("校验：mediaState(17) 需携带 camera/mic 至少一项")
+    @DisplayName("校验：mediaState(100) 需携带 camera/mic 至少一项")
     void validatorMediaState() {
-        assertTrue(RtcSignalValidator.validateGroupLifecyclePayload(17, "{\"camera\":true}", "u1"));
-        assertTrue(RtcSignalValidator.validateGroupLifecyclePayload(17, "{\"mic\":false}", "u1"));
-        assertFalse(RtcSignalValidator.validateGroupLifecyclePayload(17, "{}", "u1"));
-        assertFalse(RtcSignalValidator.validateGroupLifecyclePayload(17, "", "u1"));
+        assertTrue(RtcSignalValidator.validateGroupLifecyclePayload(100, "{\"camera\":true}", "u1"));
+        assertTrue(RtcSignalValidator.validateGroupLifecyclePayload(100, "{\"mic\":false}", "u1"));
+        assertFalse(RtcSignalValidator.validateGroupLifecyclePayload(100, "{}", "u1"));
+        assertFalse(RtcSignalValidator.validateGroupLifecyclePayload(100, "", "u1"));
     }
 
     // ====================== 业务事件（话单） ======================
@@ -213,6 +213,46 @@ class GroupCallServiceTest {
         service.handle(null, null, "u1", group(GroupSignalType.GROUP_CALL_END, "u1", "g3", roomId, null));
         assertTrue(events.stream().anyMatch(e -> e.startsWith("end:ended:")), "发起人结束应触发 onCallEnd(ended)");
         assertNull(manager.getRoom(roomId), "结束后房间应被移除");
+    }
+
+    @Test
+    @DisplayName("发起人结束：roomId 为空时按占用房间回退解析，释放占用避免误判忙线")
+    void endWithEmptyRoomIdFallsBackToUserRoom() {
+        String roomId = startRoom("g6", "u1");
+        assertTrue(manager.isUserBusy("u1"));
+
+        // 模拟 ROOM_STATE 未到达即取消：GROUP_CALL_END 携带空 roomId
+        service.handle(null, null, "u1", group(GroupSignalType.GROUP_CALL_END, "u1", "g6", null, null));
+
+        assertNull(manager.getRoom(roomId), "回退解析后房间应被结束移除");
+        assertFalse(manager.isUserBusy("u1"), "占用应释放，避免再次发起被误判忙线");
+        assertTrue(events.stream().anyMatch(e -> e.startsWith("end:ended:")));
+    }
+
+    @Test
+    @DisplayName("成员退出：roomId 为空时按占用房间回退解析")
+    void leaveWithEmptyRoomIdFallsBackToUserRoom() {
+        String roomId = startRoom("g7", "u1");
+        service.handle(null, null, "u2", group(GroupSignalType.GROUP_CALL_JOIN, "u2", "g7", roomId, null));
+        assertTrue(manager.isUserBusy("u2"));
+
+        service.handle(null, null, "u2", group(GroupSignalType.GROUP_CALL_LEAVE, "u2", "g7", null, null));
+
+        assertFalse(manager.isUserBusy("u2"), "退出后应释放 u2 占用");
+        assertTrue(events.contains("leave:u2:leave"));
+    }
+
+    @Test
+    @DisplayName("非发起人携带空 roomId 结束：回退解析后仍被发起人校验拦截")
+    void endWithEmptyRoomIdByNonInitiatorRejected() {
+        String roomId = startRoom("g8", "u1");
+        service.handle(null, null, "u2", group(GroupSignalType.GROUP_CALL_JOIN, "u2", "g8", roomId, null));
+
+        // u2 非发起人，携带空 roomId 发 END：回退解析到房间但被发起人校验拦截
+        service.handle(null, null, "u2", group(GroupSignalType.GROUP_CALL_END, "u2", "g8", null, null));
+
+        assertNotNull(manager.getRoom(roomId), "非发起人不得结束房间");
+        assertTrue(manager.isUserBusy("u1"));
     }
 
     @Test

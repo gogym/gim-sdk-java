@@ -134,14 +134,11 @@ public class RtcSingleHandler extends BaseHandler {
                 // 被叫接听：会话转 CONNECTING；会话失效时已回信令并拦截
                 return callService.onAccept(signal, channel, userId) ? signal : null;
             case CALL_REJECT:
-                callService.onTermination(signal, userId, CallEndReason.REJECTED);
-                return signal;
+                return callService.onTermination(signal, userId, CallEndReason.REJECTED);
             case CALL_CANCEL:
-                callService.onTermination(signal, userId, CallEndReason.CANCELLED);
-                return signal;
+                return callService.onTermination(signal, userId, CallEndReason.CANCELLED);
             case CALL_HANGUP:
-                callService.onTermination(signal, userId, CallEndReason.ANSWERED);
-                return signal;
+                return callService.onTermination(signal, userId, CallEndReason.ANSWERED);
             case OFFER:
                 // 首条 Offer 转发前近似标记接通
                 callService.onTalkStart(signal.getCallId());

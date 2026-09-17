@@ -39,8 +39,8 @@ public class RtcSignalValidator {
     }
 
     /**
-     * 校验群通话生命周期信令（signalType 9~17）的 payload
-     * groupCallRequest(9) 需携带 callType，mediaState(17) 需携带 camera/mic 至少一项，
+     * 校验群通话生命周期信令（signalType 20~27 与 mediaState=100）的 payload
+     * groupCallRequest(20) 需携带 callType，mediaState(100) 需携带 camera/mic 至少一项，
      * 其余信令允许空 payload（房间定位依赖 proto roomId 字段）
      *
      * @return true 校验通过，false 校验失败
@@ -74,7 +74,7 @@ public class RtcSignalValidator {
     }
 
     /**
-     * 公共校验逻辑（1:1 通话信令 1~8 与媒体开关 17，群内媒体信令 1~8）：根据 signalType 使用对应 DTO 反序列化校验 payload
+     * 公共校验逻辑（1:1 通话信令 1~8 与媒体开关 mediaState(100)，群内媒体信令 1~8）：根据 signalType 使用对应 DTO 反序列化校验 payload
      *
      * @return true 校验通过，false 校验失败
      */

@@ -8,7 +8,7 @@ import java.util.List;
  * GroupCallParticipantDto.java
  *
  * WebRTC 群通话成员变更通知 DTO
- * 用于 participantNotify 信令（signalType=15，服务端 → 成员）
+ * 用于 participantNotify 信令（signalType=26，服务端 → 成员）
  *
  * @author gogym
  */

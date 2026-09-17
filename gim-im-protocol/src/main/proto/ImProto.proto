@@ -164,11 +164,11 @@ message RtcSignal {
   string senderId   = 2;  // 发送者ID
   string receiverId = 3;  // 接收者ID
   string payload    = 4;  // JSON: SDP / ICE candidate / 通话类型等数据
-  string callId     = 5;  // 通话唯一ID（服务端创建会话时生成，回传给双方）
+  string callId     = 5;  // 通话唯一ID（主叫未传时由服务端创建会话生成：回传主叫走 callAck(9)，转发被叫走 callRequest(4)）
 }
 // cmd = 51: WebRTC 群聊信令消息
 message RtcGroup {
-  int32  signalType = 1;  // 信令类型（与 RtcSignal 枚举一致，1~8 媒体信令，9~16 群通话生命周期信令）
+  int32  signalType = 1;  // 信令类型（与 RtcSignal 枚举一致，1~8 媒体信令，20~27 群通话生命周期信令，mediaState=100 跨场景共用）
   string senderId   = 2;  // 发送者ID
   string groupId    = 3;  // 目标群组ID
   string payload    = 4;  // JSON: SDP / ICE candidate / 通话类型 / 成员快照等数据
@@ -176,9 +176,12 @@ message RtcGroup {
   string roomId     = 6;  // 群通话房间唯一ID（服务端创建房间时生成，回传给成员）
   int32  mode       = 7;  // 通话模式：0-Mesh(P2P直连) 1-SFU（服务端按房间实际模式回填）
 }
-// signalType 枚举（与客户端 RtcSignalType 保持一致）：
+// signalType 枚举（与客户端 RtcSignalType 保持一致；1:1 与群通话共用同一数值空间）：
 // 1=offer, 2=answer, 3=iceCandidate,
 // 4=callRequest, 5=callAccept, 6=callReject, 7=callCancel, 8=callHangup,
-// 9=groupCallRequest, 10=groupCallInvite, 11=groupCallJoin, 12=groupCallReject,
-// 13=groupCallLeave, 14=groupCallEnd, 15=participantNotify, 16=roomState,
-// 17=mediaState（媒体开关状态，RtcSignal 单聊信令专用，payload: camera/mic）
+// 9=callAck（呼叫确认，服务端→主叫：主叫 callRequest 未携带 callId 时，服务端生成后回传，payload 可为空）
+// 10~19=预留给 1:1 后续扩展
+// 20=groupCallRequest, 21=groupCallInvite, 22=groupCallJoin, 23=groupCallReject,
+// 24=groupCallLeave, 25=groupCallEnd, 26=participantNotify, 27=roomState
+// 28~99=预留给群通话后续扩展
+// 100=mediaState（媒体开关状态，1:1 纯转发、群通话聚合广播，payload: camera/mic；独立高位编号，与两侧生命周期号段隔离）

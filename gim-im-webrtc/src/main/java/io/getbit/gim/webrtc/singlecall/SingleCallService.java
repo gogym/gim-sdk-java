@@ -30,6 +30,7 @@ import java.util.UUID;
  *
  * 职责：
  * 1. callRequest(4)：忙线互斥判定（1:1 ↔ 群通话双向）→ 创建会话 → 服务端生成/回填 callId
+ *    callId 由服务端生成时以 CALL_ACK(9) 回传主叫，保证双方持有同一 callId；
  *    忙线时拦截转发并向主叫回 callReject(reason=busy)
  * 2. callAccept(5)：被叫接听校验 → 会话转 CONNECTING；会话失效时回 callReject(reason=invalid)
  * 3. offer(1)：转发前标记会话进入 TALKING（近似接通时刻）
@@ -99,8 +100,9 @@ public class SingleCallService extends BaseHandler implements SingleCallListener
 
     /**
      * 处理 callRequest(4)：忙线互斥 → 创建会话 → 回填服务端 callId
+     * callId 由服务端生成（客户端传空）时，额外以 CALL_ACK(9) 回传主叫，保证双方 callId 一致
      *
-     * @return 处理后的信令（可能改写 callId）供转发；null 表示已拦截（忙线/非法，已回信令）
+     * @return 处理后的信令（可能改写 callId）供转发给被叫；null 表示已拦截（忙线/非法，已回信令）
      */
     public ImProto.RtcSignal onCallRequest(ImProto.RtcSignal signal, Channel channel, String userId) {
         String calleeId = signal.getReceiverId();
@@ -118,6 +120,8 @@ public class SingleCallService extends BaseHandler implements SingleCallListener
         }
 
         String callId = resolveCallId(signal.getCallId());
+        // 客户端未传 callId 时由服务端生成，需回传主叫（否则主叫无法关联后续 offer/cancel/hangup）
+        boolean serverGeneratedCallId = signal.getCallId() == null || signal.getCallId().isEmpty();
         if (!sessionManager.createSession(callId, userId, calleeId, callType, channel, null)) {
             // 创建时被并发请求占用，兜底拦截
             log.info("1:1通话创建失败(并发占用): caller={}, callee={}", userId, calleeId);
@@ -128,8 +132,37 @@ public class SingleCallService extends BaseHandler implements SingleCallListener
         fireCallStart(callId, userId, calleeId, callType);
         log.info("1:1通话会话已创建: callId={}, caller={}, callee={}, type={}",
                 callId, userId, calleeId, callType);
-        // callId 为空时由服务端生成，重写后回传双方
-        return signal.toBuilder().setCallId(callId).build();
+        // 重写 callId 后转发给被叫
+        ImProto.RtcSignal forwarded = signal.toBuilder().setCallId(callId).build();
+        if (serverGeneratedCallId) {
+            // 以 CALL_ACK 回传主叫：保证双方持有同一权威 callId
+            sendCallAck(userId, callId);
+        }
+        return forwarded;
+    }
+
+    /**
+     * 服务端生成 callId 时以 CALL_ACK(9) 回传主叫：主叫据此获得与被叫一致的权威 callId，
+     * 用于后续 cancel/hangup 等信令关联。使用独立信令类型（而非 CALL_REQUEST 副本），
+     * 避免客户端将其误判为新来电
+     */
+    private void sendCallAck(String callerId, String callId) {
+        try {
+            ImProto.RtcSignal ack = ImProto.RtcSignal.newBuilder()
+                    .setSignalType(SingleSignalType.CALL_ACK.getCode())
+                    .setSenderId("")
+                    .setReceiverId(callerId)
+                    .setCallId(callId)
+                    .build();
+            boolean delivered = routeToUser(callerId, PacketCodec.create(Cmd.RTC_SIGNAL, 0, ack));
+            if (!delivered) {
+                log.warn("1:1通话 CALL_ACK 回传主叫失败(主叫离线): caller={}, callId={}", callerId, callId);
+            } else {
+                log.debug("1:1通话 CALL_ACK 已回传主叫: caller={}, callId={}", callerId, callId);
+            }
+        } catch (Exception e) {
+            log.error("1:1通话 CALL_ACK 回传主叫异常: caller={}, callId={}", callerId, callId, e);
+        }
     }
 
     /**
@@ -164,13 +197,26 @@ public class SingleCallService extends BaseHandler implements SingleCallListener
 
     /**
      * 处理终止类信令（callReject(6)/callCancel(7)/callHangup(8)）：先结束会话，由调用方继续转发
+     *
+     * @return 处理后的信令（callId 为空时回填服务端解析出的 callId）供转发
      */
-    public void onTermination(ImProto.RtcSignal signal, String userId, CallEndReason reason) {
+    public ImProto.RtcSignal onTermination(ImProto.RtcSignal signal, String userId, CallEndReason reason) {
         String callId = signal.getCallId();
         if (callId == null || callId.isEmpty()) {
-            return;
+            // 信令未携带 callId：常见于服务端生成 callId 未回传主叫，主叫取消/挂断时仍持有空 callId。
+            // 回退按操作者当前占用会话解析（单用户同时仅一路 1:1 通话），
+            // 避免占用 key 残留导致后续呼叫被误判忙线
+            callId = sessionManager.getCallIdByUser(userId);
+        }
+        if (callId == null || callId.isEmpty()) {
+            return signal;
         }
         sessionManager.endSession(callId, reason);
+        // 回填解析出的 callId，确保转发给对端的终止信令可被正确匹配
+        if (!callId.equals(signal.getCallId())) {
+            return signal.toBuilder().setCallId(callId).build();
+        }
+        return signal;
     }
 
     // ====================== 内部事件（SingleCallSessionManager 回调） ======================

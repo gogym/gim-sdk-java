@@ -209,12 +209,33 @@ class SingleCallServiceTest {
     }
 
     @Test
-    @DisplayName("termination：缺少 callId 时不影响会话")
+    @DisplayName("termination：缺少 callId 时按操作者占用会话回退解析并释放")
     void terminationWithoutCallId() {
         assertTrue(sessionManager.createSession("c1", "a", "b", "video", null, null));
 
-        callService.onTermination(signal(SingleSignalType.CALL_HANGUP, "a", "b", null, "{\"reason\":\"normal\"}"),
-                "a", CallEndReason.ANSWERED);
+        // 主叫取消时未携带 callId（如服务端生成 callId 未回传主叫），
+        // 应按其当前占用会话 c1 回退解析并结束，避免占用残留导致后续误判忙线
+        ImProto.RtcSignal result = callService.onTermination(
+                signal(SingleSignalType.CALL_CANCEL, "a", "b", null, "{\"reason\":\"normal\"}"),
+                "a", CallEndReason.CANCELLED);
+
+        assertEquals("c1", result.getCallId());
+        assertNull(sessionManager.getSession("c1"));
+        assertFalse(sessionManager.isInCall("a"));
+        assertFalse(sessionManager.isInCall("b"));
+        assertEquals(1, endedReasons.size());
+        assertEquals(CallEndReason.CANCELLED, endedReasons.get(0));
+    }
+
+    @Test
+    @DisplayName("termination：缺少 callId 且无占用会话时不影响任何会话")
+    void terminationWithoutCallIdAndNoActiveSession() {
+        assertTrue(sessionManager.createSession("c1", "a", "b", "video", null, null));
+
+        // 非参与方 c 携带空 callId 终止：无占用会话，回退解析为空，不应误结束 c1
+        callService.onTermination(
+                signal(SingleSignalType.CALL_CANCEL, "c", "b", null, "{\"reason\":\"normal\"}"),
+                "c", CallEndReason.CANCELLED);
 
         assertNotNull(sessionManager.getSession("c1"));
         assertEquals(0, endedReasons.size());
