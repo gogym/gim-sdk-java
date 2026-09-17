@@ -146,8 +146,12 @@ public class RtcSingleHandler extends BaseHandler {
                 // 首条 Offer 转发前近似标记接通
                 callService.onTalkStart(signal.getCallId());
                 return signal;
+            case ANSWER:
+            case ICE_CANDIDATE:
+            case MEDIA_STATE:
+                // 媒体信令（answer/ICE/媒体开关状态）纯转发
+                return signal;
             default:
-                // 媒体信令（ICE/MEDIA_STATE）纯转发
                 return signal;
         }
     }

@@ -32,17 +32,14 @@ public class WebRtcAutoConfiguration {
 
     /**
      * 1:1 通话会话生命周期管理器
-     * 装配 ImRedisAdapter 时会话元数据存 Redis（集群可见），否则退化为本地内存态；
+     * 由 SingleCallSessionManager 依据 gim.enable-cluster 自行决定存储层：集群模式用 Redis（跨节点可见），单机模式退化为本地会话表；
      * 关闭时通过 shutdown 释放调度线程与本地状态（Redis 状态由 TTL 兜底回收，TALKING 会话由续期任务滚动续期）
      */
     @Bean(destroyMethod = "shutdown")
     @ConditionalOnMissingBean
     public SingleCallSessionManager singleCallSessionManager(GimProperties gimProperties,
                                                      ObjectProvider<ImRedisAdapter> redisAdapterProvider) {
-        return new SingleCallSessionManager(
-                redisAdapterProvider.getIfAvailable(),
-                gimProperties.getRtcCall().getRingTimeoutSeconds(),
-                gimProperties.getRtcCall().getSessionTtlSeconds());
+        return new SingleCallSessionManager(gimProperties, redisAdapterProvider.getIfAvailable());
     }
 
     @Bean

@@ -170,8 +170,17 @@ public class GimBootstrap {
             // 参数校验
             requireNonNull(config, "config");
             requireNonNull(tokenVerifier, "tokenVerifier");
-            requireNonNull(redisAdapter, "redisAdapter");
             requireNonNull(idGenerator, "idGenerator");
+
+            // Redis 依赖按集群开关分级校验：
+            // - 集群模式（enable-cluster=true）：Redis 适配器与订阅器均为强制依赖，缺失即快速失败，
+            //   避免跨节点路由/会话因 pub/sub 缺位而静默失效
+            // - 单机模式（enable-cluster=false）：Redis 可选，未配置时 redisAdapter 保持 null，
+            //   各消费方退化为节点本地态（UserRouteService 本地缓存 / SingleCallSessionManager 本地会话表）
+            if (config.isEnableCluster()) {
+                requireNonNull(redisAdapter, "redisAdapter（集群模式 gim.enable-cluster=true 必须配置 Redis 适配器）");
+                requireNonNull(redisSubscriber, "redisSubscriber（集群模式 gim.enable-cluster=true 必须配置 Redis 订阅器）");
+            }
 
             // 可选组件默认值
             ImRedisSubscriber subscriber = redisSubscriber != null ? redisSubscriber : new NoOpRedisSubscriber();

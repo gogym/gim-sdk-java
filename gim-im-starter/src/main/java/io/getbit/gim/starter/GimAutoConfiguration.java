@@ -54,7 +54,7 @@ public class GimAutoConfiguration {
     @ConditionalOnMissingBean
     public StartContext gimStartContext(GimProperties config,
                                                      ImTokenVerifier tokenVerifier,
-                                                     ImRedisAdapter redisAdapter,
+                                                     ObjectProvider<ImRedisAdapter> redisAdapterProvider,
                                                      ImIdGenerator idGenerator,
                                                      ObjectProvider<ImRedisSubscriber> redisSubscriberProvider,
                                                      ObjectProvider<ImGroupMemberProvider> groupMemberProviderProvider,
@@ -68,8 +68,14 @@ public class GimAutoConfiguration {
         GimBootstrap.Builder builder = GimBootstrap.builder()
                 .config(config)
                 .tokenVerifier(tokenVerifier)
-                .redisAdapter(redisAdapter)
                 .idGenerator(idGenerator);
+
+        // Redis 适配器可选：单机模式（gim.enable-cluster=false）可不配置；
+        // 集群模式缺失时由 GimBootstrap.assemble 启动校验快速失败
+        ImRedisAdapter redisAdapter = redisAdapterProvider.getIfAvailable();
+        if (redisAdapter != null) {
+            builder.redisAdapter(redisAdapter);
+        }
 
         ImRedisSubscriber subscriber = redisSubscriberProvider.getIfAvailable();
         if (subscriber != null) {

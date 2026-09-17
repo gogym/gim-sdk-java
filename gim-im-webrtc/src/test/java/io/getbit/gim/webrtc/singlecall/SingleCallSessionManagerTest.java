@@ -1,5 +1,6 @@
 package io.getbit.gim.webrtc.singlecall;
 
+import io.getbit.gim.core.config.properties.GimProperties;
 import io.getbit.gim.core.spi.ImRedisAdapter;
 import io.getbit.gim.webrtc.enums.CallEndReason;
 import io.getbit.gim.webrtc.enums.SingleCallSessionStatus;
@@ -61,6 +62,27 @@ class SingleCallSessionManagerTest {
         }
     }
 
+    // ====================== 配置构造辅助 ======================
+
+    /**
+     * 集群模式配置（enable-cluster=true）：会话走 Redis，振铃/TTL 取默认 60/7200
+     */
+    private static GimProperties clusterConfig() {
+        GimProperties p = new GimProperties();
+        p.setEnableCluster(true);
+        return p;
+    }
+
+    /**
+     * 单机模式配置（enable-cluster=false）：自定义振铃超时与会话 TTL
+     */
+    private static GimProperties localConfig(int ringTimeoutSeconds, int sessionTtlSeconds) {
+        GimProperties p = new GimProperties();
+        p.getRtcCall().setRingTimeoutSeconds(ringTimeoutSeconds);
+        p.getRtcCall().setSessionTtlSeconds(sessionTtlSeconds);
+        return p;
+    }
+
     // ====================== 生命周期（内存态） ======================
 
     @Test
@@ -119,8 +141,8 @@ class SingleCallSessionManagerTest {
     @DisplayName("Redis态：会话跨管理器实例可见（模拟跨节点）")
     void redisCrossNodeVisibility() {
         FakeRedisAdapter redis = new FakeRedisAdapter();
-        SingleCallSessionManager nodeA = new SingleCallSessionManager(redis, 60, 7200);
-        SingleCallSessionManager nodeB = new SingleCallSessionManager(redis, 60, 7200);
+        SingleCallSessionManager nodeA = new SingleCallSessionManager(clusterConfig(), redis);
+        SingleCallSessionManager nodeB = new SingleCallSessionManager(clusterConfig(), redis);
         try {
             assertTrue(nodeA.createSession("c1", "a", "b", "video", null, null));
 
@@ -151,7 +173,7 @@ class SingleCallSessionManagerTest {
                 return false;
             }
         };
-        SingleCallSessionManager manager = new SingleCallSessionManager(redis, 60, 7200);
+        SingleCallSessionManager manager = new SingleCallSessionManager(clusterConfig(), redis);
         try {
             assertTrue(manager.createSession("c1", "a", "b", "video", null, null));
             assertFalse(manager.createSession("c2", "a", "x", "video", null, null));
@@ -165,7 +187,7 @@ class SingleCallSessionManagerTest {
     @Test
     @DisplayName("振铃超时：CALLING 超时自动结束并触发事件")
     void ringTimeout() throws InterruptedException {
-        SingleCallSessionManager manager = new SingleCallSessionManager(null, 1, 7200);
+        SingleCallSessionManager manager = new SingleCallSessionManager(localConfig(1, 7200), null);
         List<SingleCallSession> timeouts = new CopyOnWriteArrayList<>();
         List<CallEndReason> endReasons = new CopyOnWriteArrayList<>();
         manager.setListener(new SingleCallListener() {
@@ -197,7 +219,7 @@ class SingleCallSessionManagerTest {
     @Test
     @DisplayName("振铃超时：已接听的会话不超时")
     void ringTimeout_notAppliesToAccepted() throws InterruptedException {
-        SingleCallSessionManager manager = new SingleCallSessionManager(null, 1, 7200);
+        SingleCallSessionManager manager = new SingleCallSessionManager(localConfig(1, 7200), null);
         try {
             assertTrue(manager.createSession("c1", "a", "b", "video", null, null));
             assertTrue(manager.acceptSession("c1", "b", null));
@@ -217,7 +239,7 @@ class SingleCallSessionManagerTest {
     @Test
     @DisplayName("本地过期策略：CALLING 限振铃窗口，TALKING 仅 TTL 天花板且由续期任务滚动续期")
     void localExpirePolicy() {
-        SingleCallSessionManager manager = new SingleCallSessionManager(null, 60, 7200);
+        SingleCallSessionManager manager = new SingleCallSessionManager(localConfig(60, 7200), null);
         try {
             SingleCallSession calling = new SingleCallSession();
             calling.setStatus(SingleCallSessionStatus.CALLING);

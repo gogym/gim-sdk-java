@@ -74,7 +74,7 @@ public class RtcSignalValidator {
     }
 
     /**
-     * 公共校验逻辑（1:1 通话与群内媒体信令 1~8）：根据 signalType 使用对应 DTO 反序列化校验 payload
+     * 公共校验逻辑（1:1 通话信令 1~8 与媒体开关 17，群内媒体信令 1~8）：根据 signalType 使用对应 DTO 反序列化校验 payload
      *
      * @return true 校验通过，false 校验失败
      */
@@ -108,6 +108,10 @@ public class RtcSignalValidator {
             case CALL_HANGUP:
                 SingleCallHangupDto hangup = parseDto(payload, SingleCallHangupDto.class, type, senderId);
                 return hangup != null && isNotBlank(hangup.getReason());
+            case MEDIA_STATE:
+                // 1:1 媒体开关：camera/mic 至少一项非 null（null 表示该项未变化）
+                GroupMediaStateDto singleMedia = parseDto(payload, GroupMediaStateDto.class, type, senderId);
+                return singleMedia != null && (singleMedia.getCamera() != null || singleMedia.getMic() != null);
             default:
                 return false;
         }

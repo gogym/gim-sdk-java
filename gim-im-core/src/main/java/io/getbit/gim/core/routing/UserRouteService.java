@@ -61,32 +61,37 @@ public class UserRouteService {
 
     /**
      * 注册用户路由（绑定连接时调用）
+     * 单机模式（enable-cluster=false）仅维护本地缓存，集群模式额外写入 Redis 供跨节点查询
      */
     public void register(String userId) {
         String serverId = config.getServerId();
-        String key = CacheKeyBuilder.userRoute(userId);
-
-        redisAdapter.setex(key, ROUTE_EXPIRE_SECONDS, serverId);
         localCache.put(userId, serverId);
+        if (config.isEnableCluster()) {
+            redisAdapter.setex(CacheKeyBuilder.userRoute(userId), ROUTE_EXPIRE_SECONDS, serverId);
+        }
 
         log.debug("注册用户路由: userId={}, serverId={}", userId, serverId);
     }
 
     /**
      * 续期用户路由（心跳时调用）
+     * 同步刷新本地缓存，避免单机模式下路由项因写后过期而丢失
      */
     public void renew(String userId) {
-        String key = CacheKeyBuilder.userRoute(userId);
-        redisAdapter.setex(key, ROUTE_EXPIRE_SECONDS, config.getServerId());
+        String serverId = config.getServerId();
+        localCache.put(userId, serverId);
+        if (config.isEnableCluster()) {
+            redisAdapter.setex(CacheKeyBuilder.userRoute(userId), ROUTE_EXPIRE_SECONDS, serverId);
+        }
     }
 
     /**
      * 注销用户路由（断开连接时调用）
      */
     public void unregister(String userId) {
-        String key = CacheKeyBuilder.userRoute(userId);
-
-        redisAdapter.del(key);
+        if (config.isEnableCluster()) {
+            redisAdapter.del(CacheKeyBuilder.userRoute(userId));
+        }
         localCache.invalidate(userId);
 
         log.debug("注销用户路由: userId={}", userId);
@@ -102,7 +107,10 @@ public class UserRouteService {
             return cached;
         }
 
-        // 2. Redis
+        // 2. Redis（单机模式路由仅依赖本地缓存，不查 Redis）
+        if (!config.isEnableCluster()) {
+            return null;
+        }
         String key = CacheKeyBuilder.userRoute(userId);
         String serverId = redisAdapter.get(key);
 

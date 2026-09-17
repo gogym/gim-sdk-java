@@ -66,9 +66,16 @@ public class ImNodeHealthIndicator {
         boolean nettyOk = checkNetty();
         details.put("netty", nettyOk ? "UP" : "DOWN");
 
-        // Redis 连接状态
-        boolean redisOk = checkRedis();
-        details.put("redis", redisOk ? "UP" : "DOWN");
+        // Redis 连接状态：仅集群模式依赖 Redis，单机模式标记 N/A 且不参与综合健康判定
+        // （集群模式下 redisAdapter 必非空，已在 GimBootstrap 启动校验保证）
+        boolean redisOk;
+        if (!clusterEnabled) {
+            details.put("redis", "N/A");
+            redisOk = true;
+        } else {
+            redisOk = checkRedis();
+            details.put("redis", redisOk ? "UP" : "DOWN");
+        }
 
         // 集群订阅状态
         if (clusterEnabled) {

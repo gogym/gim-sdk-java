@@ -5,12 +5,14 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
 import com.google.gson.Gson;
 import io.getbit.gim.core.cache.CacheKeyBuilder;
+import io.getbit.gim.core.config.properties.GimProperties;
 import io.getbit.gim.core.spi.ImRedisAdapter;
 import io.getbit.gim.core.util.GimThreads;
 import io.getbit.gim.webrtc.enums.CallEndReason;
 import io.getbit.gim.webrtc.enums.SingleCallSessionStatus;
 import io.getbit.gim.webrtc.singlecall.listener.SingleCallListener;
 import io.getbit.gim.webrtc.singlecall.model.SingleCallSession;
+import io.getbit.gim.webrtc.singlecall.model.SingleCallSessionSnapshot;
 import io.netty.channel.Channel;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -31,10 +33,10 @@ import java.util.concurrent.TimeUnit;
  * 3. 超时策略：CALLING 超过 ringTimeoutSeconds 无应答自动结束会话，事件经 SingleCallListener 通知上层
  * 4. 掉线清理：endSessionsByUser 等价于被动挂断，供 ConnectionCloseListener 掉线链路调用
  *
- * 存储分层：
- * - 配置 ImRedisAdapter 时（集群模式）：会话元数据与占用 key 存 Redis，跨节点可见；
+ * 存储分层（以 gim.enable-cluster 为判据）：
+ * - 集群模式（enable-cluster=true）：会话元数据与占用 key 存 Redis，跨节点可见；
  *   Channel 为节点本地资源，不随 Redis 同步（对端通知统一走信令路由）
- * - 未配置时（单机/测试）：退化为本地 Caffeine 缓存，行为与集群模式一致
+ * - 单机模式（enable-cluster=false）：退化为本地 Caffeine 缓存，不依赖 Redis，行为与集群模式一致
  *
  * Redis Key 结构：
  * - im:rtc:call:{callId} → 会话 JSON（不含 Channel 字段）
@@ -78,7 +80,12 @@ public class SingleCallSessionManager {
     private final Map<String, String> localUserCallMap = new ConcurrentHashMap<>();
 
     /**
-     * Redis 适配器（为 null 时退化为本地内存模式）
+     * GIM 配置：enable-cluster 决定是否使用 Redis（集群模式），rtc-call 提供振铃超时与会话 TTL
+     */
+    private final GimProperties config;
+
+    /**
+     * Redis 适配器（仅集群模式 enable-cluster=true 时使用；单机模式即使注入也忽略）
      */
     private final ImRedisAdapter redisAdapter;
 
@@ -107,23 +114,23 @@ public class SingleCallSessionManager {
     private volatile SingleCallListener listener;
 
     /**
-     * 内存模式构造（单机 / 测试场景）
+     * 内存模式构造（单机 / 测试场景）：enable-cluster=false，振铃超时与会话 TTL 取 RtcCallProperties 默认值
      */
     public SingleCallSessionManager() {
-        this(null, 60, 7200);
+        this(new GimProperties(), null);
     }
 
     /**
      * 完整构造
      *
-     * @param redisAdapter       Redis 适配器，null 时退化为内存模式
-     * @param ringTimeoutSeconds 振铃超时（秒）
-     * @param sessionTtlSeconds  会话 TTL（秒）
+     * @param config       GIM 配置：enable-cluster 决定是否使用 Redis，rtc-call 提供振铃超时与会话 TTL
+     * @param redisAdapter Redis 适配器；集群模式（enable-cluster=true）必须非空（由 GimBootstrap 启动校验保证），单机模式忽略
      */
-    public SingleCallSessionManager(ImRedisAdapter redisAdapter, int ringTimeoutSeconds, int sessionTtlSeconds) {
+    public SingleCallSessionManager(GimProperties config, ImRedisAdapter redisAdapter) {
+        this.config = config != null ? config : new GimProperties();
         this.redisAdapter = redisAdapter;
-        this.ringTimeoutSeconds = Math.max(1, ringTimeoutSeconds);
-        this.sessionTtlSeconds = Math.max(60, sessionTtlSeconds);
+        this.ringTimeoutSeconds = Math.max(1, this.config.getRtcCall().getRingTimeoutSeconds());
+        this.sessionTtlSeconds = Math.max(60, this.config.getRtcCall().getSessionTtlSeconds());
 
         // TALKING 会话滚动续期：重写会话（Redis re-SETEX / 本地刷新写时间）并续期占用 key，
         // 保证长通话不被 TTL 驱逐；周期为 sessionTtl/4（至少 30s）
@@ -344,7 +351,7 @@ public class SingleCallSessionManager {
      * 原子占位用户占用 key：优先 setnx，实现方不支持时降级为 GET+SETEX
      */
     private boolean tryAcquireBusy(String userId, String callId) {
-        if (redisAdapter != null) {
+        if (config.isEnableCluster()) {
             int ttl = ringTimeoutSeconds + 30;
             if (redisAdapter.setnx(CacheKeyBuilder.rtcBusy(userId), callId, ttl)) {
                 return true;
@@ -363,7 +370,7 @@ public class SingleCallSessionManager {
      * 释放用户占用 key（值匹配才删除，避免误删该用户新通话的占位）
      */
     private void releaseBusy(String userId, String callId) {
-        if (redisAdapter != null) {
+        if (config.isEnableCluster()) {
             String current = redisAdapter.get(CacheKeyBuilder.rtcBusy(userId));
             if (callId != null && callId.equals(current)) {
                 redisAdapter.del(CacheKeyBuilder.rtcBusy(userId));
@@ -377,7 +384,7 @@ public class SingleCallSessionManager {
      * 刷新双方占用 key 为会话 TTL（接通后长占用）
      */
     private void refreshBusyTtls(SingleCallSession session) {
-        if (redisAdapter != null) {
+        if (config.isEnableCluster()) {
             for (String userId : new String[]{session.getCallerId(), session.getCalleeId()}) {
                 String current = redisAdapter.get(CacheKeyBuilder.rtcBusy(userId));
                 if (session.getCallId().equals(current)) {
@@ -391,7 +398,7 @@ public class SingleCallSessionManager {
         if (userId == null) {
             return null;
         }
-        if (redisAdapter != null) {
+        if (config.isEnableCluster()) {
             return redisAdapter.get(CacheKeyBuilder.rtcBusy(userId));
         }
         return localUserCallMap.get(userId);
@@ -400,7 +407,7 @@ public class SingleCallSessionManager {
     // ====================== 会话存取 ======================
 
     private void saveSession(SingleCallSession session) {
-        if (redisAdapter != null) {
+        if (config.isEnableCluster()) {
             redisAdapter.setex(CacheKeyBuilder.rtcCall(session.getCallId()), sessionTtlSeconds, GSON.toJson(toSnapshot(session)));
         }
         localSessionMap.put(session.getCallId(), session);
@@ -410,12 +417,12 @@ public class SingleCallSessionManager {
         if (callId == null || callId.isEmpty()) {
             return null;
         }
-        if (redisAdapter != null) {
+        if (config.isEnableCluster()) {
             String json = redisAdapter.get(CacheKeyBuilder.rtcCall(callId));
             if (json == null) {
                 return null;
             }
-            SingleCallSession session = fromSnapshot(GSON.fromJson(json, Snapshot.class));
+            SingleCallSession session = fromSnapshot(GSON.fromJson(json, SingleCallSessionSnapshot.class));
             // Channel 为节点本地资源，从本地覆盖层回填
             SingleCallSession local = localSessionMap.getIfPresent(callId);
             if (local != null) {
@@ -428,7 +435,7 @@ public class SingleCallSessionManager {
     }
 
     private void deleteSession(SingleCallSession session) {
-        if (redisAdapter != null) {
+        if (config.isEnableCluster()) {
             redisAdapter.del(CacheKeyBuilder.rtcCall(session.getCallId()));
         }
         localSessionMap.invalidate(session.getCallId());
@@ -514,43 +521,29 @@ public class SingleCallSessionManager {
 
     // ====================== Redis 快照序列化 ======================
 
-    private Snapshot toSnapshot(SingleCallSession session) {
-        Snapshot snapshot = new Snapshot();
-        snapshot.callId = session.getCallId();
-        snapshot.callerId = session.getCallerId();
-        snapshot.calleeId = session.getCalleeId();
-        snapshot.callType = session.getCallType();
-        snapshot.status = session.getStatus() == null ? null : session.getStatus().name();
-        snapshot.createTime = session.getCreateTime();
-        snapshot.connectTime = session.getConnectTime();
-        snapshot.endTime = session.getEndTime();
+    private SingleCallSessionSnapshot toSnapshot(SingleCallSession session) {
+        SingleCallSessionSnapshot snapshot = new SingleCallSessionSnapshot();
+        snapshot.setCallId(session.getCallId());
+        snapshot.setCallerId(session.getCallerId());
+        snapshot.setCalleeId(session.getCalleeId());
+        snapshot.setCallType(session.getCallType());
+        snapshot.setStatus(session.getStatus() == null ? null : session.getStatus().name());
+        snapshot.setCreateTime(session.getCreateTime());
+        snapshot.setConnectTime(session.getConnectTime());
+        snapshot.setEndTime(session.getEndTime());
         return snapshot;
     }
 
-    private SingleCallSession fromSnapshot(Snapshot snapshot) {
+    private SingleCallSession fromSnapshot(SingleCallSessionSnapshot snapshot) {
         SingleCallSession session = new SingleCallSession();
-        session.setCallId(snapshot.callId);
-        session.setCallerId(snapshot.callerId);
-        session.setCalleeId(snapshot.calleeId);
-        session.setCallType(snapshot.callType);
-        session.setStatus(snapshot.status == null ? null : SingleCallSessionStatus.valueOf(snapshot.status));
-        session.setCreateTime(snapshot.createTime);
-        session.setConnectTime(snapshot.connectTime);
-        session.setEndTime(snapshot.endTime);
+        session.setCallId(snapshot.getCallId());
+        session.setCallerId(snapshot.getCallerId());
+        session.setCalleeId(snapshot.getCalleeId());
+        session.setCallType(snapshot.getCallType());
+        session.setStatus(snapshot.getStatus() == null ? null : SingleCallSessionStatus.valueOf(snapshot.getStatus()));
+        session.setCreateTime(snapshot.getCreateTime());
+        session.setConnectTime(snapshot.getConnectTime());
+        session.setEndTime(snapshot.getEndTime());
         return session;
-    }
-
-    /**
-     * Redis 序列化快照（刻意排除 Channel 等节点本地字段）
-     */
-    private static class Snapshot {
-        String callId;
-        String callerId;
-        String calleeId;
-        String callType;
-        String status;
-        long createTime;
-        long connectTime;
-        long endTime;
     }
 }
