@@ -281,4 +281,46 @@ class GroupCallServiceTest {
         assertTrue(events.stream().anyMatch(e -> e.startsWith("end:ended:") && !e.endsWith(":0")),
                 "话单时长应大于 0");
     }
+
+    // ====================== 仅剩一人自动结束 ======================
+
+    @Test
+    @DisplayName("仅剩一人自动结束：TALKING 房间成员退出后仅剩一人时自动结束并释放占用")
+    void loneRemainingAutoEndsOnLeave() {
+        String roomId = startRoom("g9", "u1");
+        service.handle(null, null, "u2", group(GroupSignalType.GROUP_CALL_JOIN, "u2", "g9", roomId, null));
+
+        // u2 退出后仅剩发起人 u1，房间应自动结束
+        service.handle(null, null, "u2", group(GroupSignalType.GROUP_CALL_LEAVE, "u2", "g9", roomId, null));
+
+        assertNull(manager.getRoom(roomId), "仅剩一人时房间应自动结束移除");
+        assertFalse(manager.isUserBusy("u1"), "最后一人占用应随自动结束释放");
+        assertTrue(events.stream().anyMatch(e -> e.startsWith("end:ended:")), "自动结束应触发 onCallEnd(ended)");
+    }
+
+    @Test
+    @DisplayName("仅剩一人自动结束：掉线清理路径同样触发")
+    void loneRemainingAutoEndsOnDisconnect() {
+        String roomId = startRoom("g10", "u1");
+        service.handle(null, null, "u2", group(GroupSignalType.GROUP_CALL_JOIN, "u2", "g10", roomId, null));
+
+        manager.onDisconnect("u2");
+
+        assertNull(manager.getRoom(roomId), "掉线导致仅剩一人时应自动结束");
+        assertFalse(manager.isUserBusy("u1"));
+        assertTrue(events.contains("leave:u2:disconnect"));
+        assertTrue(events.stream().anyMatch(e -> e.startsWith("end:ended:")));
+    }
+
+    @Test
+    @DisplayName("仅剩一人自动结束：RINGING 阶段仅发起人一人为正常状态，不触发")
+    void ringingWithInitiatorAloneNotEnded() {
+        startRoom("g11", "u1");
+
+        // 无成员加入，房间 RINGING 且仅发起人一人：不应被自动结束
+        GroupCallRoom room = manager.getRoomByGroup("g11");
+        assertNotNull(room);
+        assertEquals(GroupCallRoomStatus.RINGING, room.getStatus());
+        assertTrue(manager.isUserBusy("u1"));
+    }
 }

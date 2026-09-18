@@ -47,6 +47,7 @@ import java.util.List;
  * 4. groupCallEnd(25)：仅发起人可结束 → 广播通话结束 → 销毁 SFU 房间
  * 5. mediaState(100)：成员摄像头/麦克风开关状态更新 → 广播成员变更(26)
  * 6. 掉线清理/邀请超时/空房回收：由 GroupCallListener 回调转化为成员变更广播
+ * 7. 仅剩一人兜底：TALKING 房间成员退出/掉线后仅剩一人时自动结束并广播 ended(26)
  *
  * 同时经 ImGroupCallListener 向业务侧发出通话开始/结束（含时长与原因）、成员进出事件
  *
@@ -317,6 +318,8 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
         String reason = parseReason(signal.getPayload());
         broadcastParticipant(room, "leave", userId, reason, userId);
         fireMemberLeave(room.getCallId(), room.getRoomId(), userId, "leave");
+        // 成员退出后仅剩一人时自动结束通话，避免最后一人永远停留在通话页
+        maybeEndWhenLoneRemaining(room, userId);
 
         log.info("群通话成员退出: roomId={}, userId={}, joinedLeft={}",
                 room.getRoomId(), userId, room.getJoinedMemberIds());
@@ -342,13 +345,7 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
         }
 
         // 销毁 SFU 媒体房间
-        if (ended.getMode() == GroupCallMode.SFU && sessionManager.getSfuAdapter() != null) {
-            try {
-                sessionManager.getSfuAdapter().destroyRoom(ended.getRoomId());
-            } catch (Exception e) {
-                log.error("SFU 房间销毁失败, roomId={}", ended.getRoomId(), e);
-            }
-        }
+        destroySfuRoom(ended);
 
         // 业务事件：发起人结束（时长已在 endRoom 时定格）
         fireCallEnd(ended, "ended");
@@ -412,6 +409,8 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
         // 成员掉线 → 向仍在通话中的成员广播退出通知
         broadcastParticipant(room, "leave", member.getUserId(), "timeout", member.getUserId());
         fireMemberLeave(room.getCallId(), room.getRoomId(), member.getUserId(), "disconnect");
+        // 掉线导致仅剩一人时同样自动结束通话
+        maybeEndWhenLoneRemaining(room, member.getUserId());
     }
 
     @Override
@@ -425,6 +424,57 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
     public void onRoomRecycled(GroupCallRoom room) {
         // 空房间回收（全员离开后无人在房，未走 endRoom 流程）→ 补发业务结束事件
         fireCallEnd(room, "empty");
+    }
+
+    // ====================== 仅剩一人兜底结束 ======================
+
+    /**
+     * 成员离开后兜底：房间已进入通话中且仅剩一名成员时自动结束通话
+     *
+     * 最后一人已无对端可通话（服务端不感知媒体层，生命周期信令是唯一通知渠道），
+     * 不自动结束会导致其永远停留在通话页且持续占用该群通话配额。
+     * 结束后向全部成员广播 ended（含已离开成员，便于客户端清理界面），
+     * 并触发业务结束回调补齐话单；SFU 模式同步销毁媒体房间。
+     *
+     * @param room       成员离开后的房间（可能已结束）
+     * @param leftUserId 触发离开的成员（广播时排除）
+     */
+    private void maybeEndWhenLoneRemaining(GroupCallRoom room, String leftUserId) {
+        GroupCallRoom current = sessionManager.getRoom(room.getRoomId());
+        // 仅 TALKING 且只剩一人时兜底；RINGING 阶段仅发起人一人为正常状态
+        if (current == null
+                || current.getStatus() != GroupCallRoomStatus.TALKING
+                || current.getJoinedMemberIds().size() != 1) {
+            return;
+        }
+        GroupCallRoom ended = sessionManager.endRoom(current.getRoomId());
+        if (ended == null) {
+            return;
+        }
+        destroySfuRoom(ended);
+
+        String remainingId = ended.getJoinedMemberIds().isEmpty()
+                ? ended.getInitiatorId()
+                : ended.getJoinedMemberIds().iterator().next();
+        fireCallEnd(ended, "ended");
+        broadcastParticipant(ended, "ended", remainingId, null, leftUserId);
+
+        log.info("群通话仅剩一人自动结束: roomId={}, group={}, remaining={}",
+                ended.getRoomId(), ended.getGroupId(), remainingId);
+    }
+
+    /**
+     * 销毁 SFU 媒体房间（SFU 模式且配置了适配器时，失败不阻断后续广播流程）
+     */
+    private void destroySfuRoom(GroupCallRoom room) {
+        if (room.getMode() != GroupCallMode.SFU || sessionManager.getSfuAdapter() == null) {
+            return;
+        }
+        try {
+            sessionManager.getSfuAdapter().destroyRoom(room.getRoomId());
+        } catch (Exception e) {
+            log.error("SFU 房间销毁失败, roomId={}", room.getRoomId(), e);
+        }
     }
 
     // ====================== 业务事件 ======================
