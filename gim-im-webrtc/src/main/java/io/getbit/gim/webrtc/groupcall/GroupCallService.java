@@ -182,6 +182,15 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
             return;
         }
 
+        // 人数上限：发起人 + 受邀成员总数不超过 maxMembers，超出部分不再邀请
+        int maxMembers = sessionManager.getMaxMembers();
+        if (inviteeIds.size() + 1 > maxMembers) {
+            int allowed = Math.max(0, maxMembers - 1);
+            log.warn("群通话受邀成员数 {} 超过人数上限 {}，仅邀请前 {} 人, groupId={}, userId={}",
+                    inviteeIds.size(), maxMembers, allowed, groupId, userId);
+            inviteeIds = new ArrayList<>(inviteeIds.subList(0, allowed));
+        }
+
         GroupCallMode mode = sessionManager.selectMode(inviteeIds.size() + 1);
         GroupCallRoom room = sessionManager.createRoom(groupId, signal.getCallId(), userId,
                 request.getCallType(), inviteeIds, mode, channel);
@@ -241,6 +250,14 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
 
         GroupCallMember joining = room.getMember(userId);
         boolean alreadyJoined = joining != null && joining.isJoined();
+
+        // 人数上限：非重复加入且已达上限时拒绝，并告知发起端（管理器内加锁二次校验）
+        if (!alreadyJoined && room.getJoinedMemberIds().size() >= sessionManager.getMaxMembers()) {
+            log.warn("加入群通话失败: 房间人数已达上限 {}, roomId={}, userId={}",
+                    sessionManager.getMaxMembers(), room.getRoomId(), userId);
+            notifyUser(userId, buildParticipantSignal(room, "full", userId, "room full", 0));
+            return;
+        }
 
         GroupCallRoom joined = sessionManager.joinRoom(room.getRoomId(), userId, channel);
         if (joined == null) {

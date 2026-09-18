@@ -126,7 +126,13 @@ public class GroupCallSessionManager {
         room.addMember(initiator);
 
         if (inviteeIds != null) {
+            int maxMembers = Math.max(1, config.getMaxMembers());
             for (String inviteeId : inviteeIds) {
+                if (room.getMembers().size() >= maxMembers) {
+                    log.warn("创建群通话: 受邀名单超过人数上限 {}，忽略剩余受邀者, roomId={}, groupId={}",
+                            maxMembers, roomId, groupId);
+                    break;
+                }
                 if (inviteeId == null || inviteeId.isEmpty() || inviteeId.equals(initiatorId)
                         || room.getMember(inviteeId) != null) {
                     continue;
@@ -176,6 +182,13 @@ public class GroupCallSessionManager {
             // 幂等：重复 join 直接返回房间（刷新连接）
             member.setChannel(channel);
             return room;
+        }
+
+        // 并发人数上限：已加入人数达到 maxMembers 时拒绝新成员加入
+        if (room.getJoinedMemberIds().size() >= config.getMaxMembers()) {
+            log.warn("加入群通话失败: 房间人数已达上限 {}, roomId={}, userId={}",
+                    config.getMaxMembers(), roomId, userId);
+            return null;
         }
 
         member.setStatus(GroupCallMemberStatus.JOINED);
@@ -338,6 +351,13 @@ public class GroupCallSessionManager {
 
     public int getRoomCount() {
         return rooms.size();
+    }
+
+    /**
+     * 单个群通话房间同时在线人数上限（发起人 + 受邀成员）
+     */
+    public int getMaxMembers() {
+        return config.getMaxMembers();
     }
 
     // ====================== 模式选择 ======================

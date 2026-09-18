@@ -26,6 +26,11 @@ public class RtcGroupCallProperties {
     private String mode = "auto";
 
     /**
+     * 单个群通话房间同时在线人数上限（发起人 + 受邀成员），超过则不再邀请/拒绝加入
+     */
+    private int maxMembers = 9;
+
+    /**
      * Mesh 模式人数上限（auto 模式下超过该人数自动切换 SFU）
      */
     private int meshMaxMembers = 8;

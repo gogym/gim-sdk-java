@@ -258,6 +258,39 @@ class GroupCallSessionManagerTest {
     }
 
     @Test
+    @DisplayName("人数上限：创建房间时受邀名单被截断至 maxMembers")
+    void createRoom_capsInvitees() {
+        config.setMaxMembers(3);
+        GroupCallRoom room = createRoom("user-a", "user-b", "user-c", "user-d", "user-e");
+
+        assertNotNull(room);
+        // 发起人 + 2 名受邀 = 3，超出部分忽略
+        assertEquals(3, room.getMembers().size());
+        assertNotNull(room.getMember("user-b"));
+        assertNotNull(room.getMember("user-c"));
+        assertNull(room.getMember("user-d"));
+        assertNull(room.getMember("user-e"));
+    }
+
+    @Test
+    @DisplayName("人数上限：已加入达 maxMembers 时拒绝新成员加入")
+    void joinRoom_rejectsWhenFull() {
+        config.setMaxMembers(2);
+        GroupCallRoom room = createRoom("user-a", "user-b", "user-c");
+
+        // user-b 加入后达到上限 2
+        assertNotNull(manager.joinRoom(room.getRoomId(), "user-b", null));
+        assertEquals(2, room.getJoinedMemberIds().size());
+
+        // user-c 无法再加入
+        assertNull(manager.joinRoom(room.getRoomId(), "user-c", null));
+        assertEquals(2, room.getJoinedMemberIds().size());
+
+        // 已加入成员重复加入仍幂等成功
+        assertNotNull(manager.joinRoom(room.getRoomId(), "user-b", null));
+    }
+
+    @Test
     @DisplayName("模式选择：auto 按人数切换，SFU 未配置时回退 Mesh")
     void selectMode() {
         config.setMode("auto");

@@ -99,6 +99,7 @@ public class WebRtcAutoConfiguration {
 
         GroupCallConfig config = new GroupCallConfig();
         config.setMode(p.getMode());
+        config.setMaxMembers(p.getMaxMembers());
         config.setMeshMaxMembers(p.getMeshMaxMembers());
         config.setInviteTimeoutSeconds(p.getInviteTimeoutSeconds());
         config.setEmptyRoomTtlSeconds(p.getEmptyRoomTtlSeconds());
