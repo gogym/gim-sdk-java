@@ -234,6 +234,65 @@ class SingleCallSessionManagerTest {
         }
     }
 
+    // ====================== 接听后连接超时 ======================
+
+    @Test
+    @DisplayName("连接超时：接听后 CONNECTING 超过 connectTimeoutSeconds 自动结束并触发事件")
+    void connectTimeout() throws InterruptedException {
+        GimProperties config = localConfig(60, 7200);
+        config.getRtcCall().setConnectTimeoutSeconds(1);
+        SingleCallSessionManager manager = new SingleCallSessionManager(config, null);
+        List<SingleCallSession> timeouts = new CopyOnWriteArrayList<>();
+        List<CallEndReason> endReasons = new CopyOnWriteArrayList<>();
+        manager.setListener(new SingleCallListener() {
+            @Override
+            public void onConnectTimeout(SingleCallSession session) {
+                timeouts.add(session);
+            }
+
+            @Override
+            public void onSessionEnded(SingleCallSession session, CallEndReason reason) {
+                endReasons.add(reason);
+            }
+        });
+        try {
+            assertTrue(manager.createSession("c1", "a", "b", "video", null, null));
+            assertTrue(manager.acceptSession("c1", "b", null));
+
+            Thread.sleep(1800);
+
+            assertNull(manager.getSession("c1"));
+            assertFalse(manager.isInCall("a"));
+            assertFalse(manager.isInCall("b"));
+            assertEquals(1, timeouts.size());
+            assertEquals("c1", timeouts.get(0).getCallId());
+            assertEquals(CallEndReason.CONNECT_FAILED, endReasons.get(0));
+        } finally {
+            manager.shutdown();
+        }
+    }
+
+    @Test
+    @DisplayName("连接超时：进入 TALKING 后取消连接超时任务，通话不受影响")
+    void connectTimeout_notAppliesToTalking() throws InterruptedException {
+        GimProperties config = localConfig(60, 7200);
+        config.getRtcCall().setConnectTimeoutSeconds(1);
+        SingleCallSessionManager manager = new SingleCallSessionManager(config, null);
+        try {
+            assertTrue(manager.createSession("c1", "a", "b", "video", null, null));
+            assertTrue(manager.acceptSession("c1", "b", null));
+            assertTrue(manager.startTalking("c1"));
+
+            Thread.sleep(1800);
+
+            assertNotNull(manager.getSession("c1"));
+            assertEquals(SingleCallSessionStatus.TALKING, manager.getSession("c1").getStatus());
+            assertTrue(manager.isInCall("a"));
+        } finally {
+            manager.shutdown();
+        }
+    }
+
     // ====================== 本地过期策略 ======================
 
     @Test

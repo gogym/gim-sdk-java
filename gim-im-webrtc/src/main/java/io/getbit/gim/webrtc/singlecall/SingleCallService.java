@@ -37,7 +37,8 @@ import java.util.UUID;
  * 4. callReject(6)/callCancel(7)/callHangup(8)：先结束会话再放行转发
  * 5. 振铃超时：向主叫下发 callCancel(reason=timeout)
  * 6. 掉线清理：向对端下发 callHangup(reason=disconnect)
- * 7. 会话建立/结束时回调业务侧 ImSingleCallListener（话单统计等）
+ * 7. 接听后连接超时：向双方下发 callHangup(reason=failed)（兜底客户端异常退出未发挂断）
+ * 8. 会话建立/结束时回调业务侧 ImSingleCallListener（话单统计等）
  *
  * @author gogym
  */
@@ -236,6 +237,16 @@ public class SingleCallService extends BaseHandler implements SingleCallListener
         }
         // 以掉线方名义向对端下发挂断信令（reason=disconnect）
         sendSignal(SingleSignalType.CALL_HANGUP, disconnectedId, peerId, session.getCallId(), CallEndReason.DISCONNECTED);
+    }
+
+    @Override
+    public void onConnectTimeout(SingleCallSession session) {
+        // 接听后连接超时（双方未建联且对端无挂断信令）：向双方下发挂断（reason=failed），
+        // 客户端据此以“连接失败”结束通话界面，避免对端无限等待
+        sendSignal(SingleSignalType.CALL_HANGUP, session.getCallerId(),
+                session.getCalleeId(), session.getCallId(), CallEndReason.CONNECT_FAILED);
+        sendSignal(SingleSignalType.CALL_HANGUP, session.getCalleeId(),
+                session.getCallerId(), session.getCallId(), CallEndReason.CONNECT_FAILED);
     }
 
     @Override

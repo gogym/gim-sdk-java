@@ -45,7 +45,17 @@ class SingleCallServiceTest {
 
         startedCalls = new CopyOnWriteArrayList<>();
         endedReasons = new CopyOnWriteArrayList<>();
-        List<ImSingleCallListener> businessListeners = List.of(new ImSingleCallListener() {
+
+        callService = new SingleCallService(
+                minimalFacade(), sessionManager, null,
+                (ImIdGenerator) () -> "id-gen-1", businessListeners());
+    }
+
+    /**
+     * 通话事件业务监听器：记录开始/结束回调（供各用例及自定义管理器装配复用）
+     */
+    private List<ImSingleCallListener> businessListeners() {
+        return List.of(new ImSingleCallListener() {
             @Override
             public void onCallStart(String callId, String callerId, String calleeId, String callType) {
                 startedCalls.add(callId);
@@ -57,10 +67,6 @@ class SingleCallServiceTest {
                 endedReasons.add(reason);
             }
         });
-
-        callService = new SingleCallService(
-                minimalFacade(), sessionManager, null,
-                (ImIdGenerator) () -> "id-gen-1", businessListeners);
     }
 
     @AfterEach
@@ -239,5 +245,28 @@ class SingleCallServiceTest {
 
         assertNotNull(sessionManager.getSession("c1"));
         assertEquals(0, endedReasons.size());
+    }
+
+    @Test
+    @DisplayName("connectTimeout：接听后连接超时自动结束会话并触发 CONNECT_FAILED 结束回调")
+    void connectTimeoutEndsSession() throws InterruptedException {
+        GimProperties config = new GimProperties();
+        config.getRtcCall().setConnectTimeoutSeconds(1);
+        sessionManager = new SingleCallSessionManager(config, null);
+        callService = new SingleCallService(minimalFacade(), sessionManager, null,
+                (ImIdGenerator) () -> "id-gen-1", businessListeners());
+
+        assertNotNull(callService.onCallRequest(
+                signal(SingleSignalType.CALL_REQUEST, "a", "b", "c1", "{\"callType\":\"video\"}"), null, "a"));
+        assertTrue(callService.onAccept(signal(SingleSignalType.CALL_ACCEPT, "b", "a", "c1", ""), null, "b"));
+
+        Thread.sleep(1800);
+
+        // 接听后未收到 offer（未进入 TALKING），服务端兜底结束会话并触发业务结束回调
+        assertNull(sessionManager.getSession("c1"));
+        assertFalse(sessionManager.isInCall("a"));
+        assertFalse(sessionManager.isInCall("b"));
+        assertEquals(1, endedReasons.size());
+        assertEquals(CallEndReason.CONNECT_FAILED, endedReasons.get(0));
     }
 }

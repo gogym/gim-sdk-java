@@ -31,4 +31,11 @@ public class RtcCallProperties {
      * 兼作异常情况（节点宕机等）下的会话自动回收兜底
      */
     private int sessionTtlSeconds = 7200;
+
+    /**
+     * 接听后连接超时（秒）：CONNECTING 状态超过该时长仍未收到 offer（未进入 TALKING），
+     * 服务端自动结束会话并通知双方，
+     * 兜底接听后客户端异常退出未发挂断信令导致对端无限等待的场景
+     */
+    private int connectTimeoutSeconds = 30;
 }

@@ -41,7 +41,12 @@ public enum CallEndReason {
     /**
      * 忙线拒绝（被叫通话占用中，服务端拦截）
      */
-    BUSY("busy", "对方忙线");
+    BUSY("busy", "对方忙线"),
+
+    /**
+     * 接听后连接失败/超时（客户端建联失败上报，或服务端 CONNECTING 阶段超时兜底）
+     */
+    CONNECT_FAILED("failed", "连接失败");
 
     /**
      * payload reason 字段取值（与客户端约定，小写）

@@ -101,9 +101,19 @@ public class SingleCallSessionManager {
     private final int sessionTtlSeconds;
 
     /**
+     * 接听后连接超时（秒）：CONNECTING 超过该时长未进入 TALKING 自动结束，兜底客户端异常退出未发挂断
+     */
+    private final int connectTimeoutSeconds;
+
+    /**
      * 振铃超时任务（仅会话创建节点持有，接听后取消）
      */
     private final Map<String, ScheduledFuture<?>> timeoutTasks = new ConcurrentHashMap<>();
+
+    /**
+     * 接听后连接超时任务（仅接听节点持有，进入 TALKING 或会话结束后取消）
+     */
+    private final Map<String, ScheduledFuture<?>> connectTimeoutTasks = new ConcurrentHashMap<>();
 
     private final ScheduledExecutorService scheduler = GimThreads.singleDaemonScheduler("gim-one-to-one-call");
 
@@ -131,6 +141,7 @@ public class SingleCallSessionManager {
         this.redisAdapter = redisAdapter;
         this.ringTimeoutSeconds = Math.max(1, this.config.getRtcCall().getRingTimeoutSeconds());
         this.sessionTtlSeconds = Math.max(60, this.config.getRtcCall().getSessionTtlSeconds());
+        this.connectTimeoutSeconds = Math.max(1, this.config.getRtcCall().getConnectTimeoutSeconds());
 
         // TALKING 会话滚动续期：重写会话（Redis re-SETEX / 本地刷新写时间）并续期占用 key，
         // 保证长通话不被 TTL 驱逐；周期为 sessionTtl/4（至少 30s）
@@ -207,6 +218,8 @@ public class SingleCallSessionManager {
         // 接通在即，双方占用 key 延长为会话 TTL
         refreshBusyTtls(session);
         cancelTimeoutTask(callId);
+        // 接听后若长时间未收到 offer（未进入 TALKING），服务端兜底结束会话并通知双方
+        scheduleConnectTimeoutTask(callId);
         return true;
     }
 
@@ -227,6 +240,7 @@ public class SingleCallSessionManager {
         session.setConnectTime(System.currentTimeMillis());
         saveSession(session);
         refreshBusyTtls(session);
+        cancelConnectTimeoutTask(callId);
         return true;
     }
 
@@ -243,6 +257,7 @@ public class SingleCallSessionManager {
             return null;
         }
         cancelTimeoutTask(callId);
+        cancelConnectTimeoutTask(callId);
         deleteSession(session);
         session.setStatus(SingleCallSessionStatus.ENDED);
         session.setEndTime(System.currentTimeMillis());
@@ -509,12 +524,48 @@ public class SingleCallSessionManager {
         }
     }
 
+    // ====================== 接听后连接超时 ======================
+
+    /**
+     * 接听后连接超时：CONNECTING 状态超过 connectTimeoutSeconds 未收到 offer（未进入 TALKING）
+     * 自动结束会话并触发 onConnectTimeout 事件，避免对端无限等待
+     */
+    private void scheduleConnectTimeoutTask(String callId) {
+        ScheduledFuture<?> future = scheduler.schedule(() -> {
+            connectTimeoutTasks.remove(callId);
+            SingleCallSession session = loadSession(callId);
+            // 仅 CONNECTING 判定超时；已接通/已结束的会话由对应路径处理
+            if (session == null || session.getStatus() != SingleCallSessionStatus.CONNECTING) {
+                return;
+            }
+            endSession(callId, CallEndReason.CONNECT_FAILED);
+            log.info("1:1通话接听后连接超时自动结束: callId={}", callId);
+            SingleCallListener l = listener;
+            if (l != null) {
+                try {
+                    l.onConnectTimeout(session);
+                } catch (Exception e) {
+                    log.error("1:1通话连接超时事件回调异常, callId={}", callId, e);
+                }
+            }
+        }, connectTimeoutSeconds, TimeUnit.SECONDS);
+        connectTimeoutTasks.put(callId, future);
+    }
+
+    private void cancelConnectTimeoutTask(String callId) {
+        ScheduledFuture<?> future = connectTimeoutTasks.remove(callId);
+        if (future != null) {
+            future.cancel(false);
+        }
+    }
+
     /**
      * 关闭会话管理器，释放调度线程与本地状态（应用下线时调用；Redis 状态由 TTL 兜底回收）
      */
     public void shutdown() {
         scheduler.shutdownNow();
         timeoutTasks.clear();
+        connectTimeoutTasks.clear();
         localSessionMap.invalidateAll();
         localUserCallMap.clear();
     }

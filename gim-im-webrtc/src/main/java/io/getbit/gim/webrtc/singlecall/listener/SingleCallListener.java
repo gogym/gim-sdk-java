@@ -34,6 +34,16 @@ public interface SingleCallListener {
     }
 
     /**
+     * 接听后连接超时：CONNECTING 状态超过 connectTimeoutSeconds 仍未收到 offer，
+     * 会话已被自动结束（兜底接听后客户端异常退出未发挂断信令的场景）
+     * 实现方应向双方下发 CALL_HANGUP(reason=failed) 信令
+     *
+     * @param session 已结束的会话（状态 ENDED）
+     */
+    default void onConnectTimeout(SingleCallSession session) {
+    }
+
+    /**
      * 会话已结束（所有结束路径的统一收口，事件在 Redis/内存状态清理后触发）
      *
      * @param session 已结束的会话（状态 ENDED，含时长信息）
