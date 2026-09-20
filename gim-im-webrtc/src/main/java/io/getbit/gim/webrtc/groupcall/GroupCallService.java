@@ -48,6 +48,7 @@ import java.util.List;
  * 5. mediaState(100)：成员摄像头/麦克风开关状态更新 → 广播成员变更(26)
  * 6. 掉线清理/邀请超时/空房回收：由 GroupCallListener 回调转化为成员变更广播
  * 7. 仅剩一人兜底：TALKING 房间成员退出/掉线后仅剩一人时自动结束并广播 ended(26)
+ * 8. 全员拒绝兜底：RINGING 房间所有受邀成员均已拒绝（无人加入/仍在振铃）时自动结束并广播 ended(26)
  *
  * 同时经 ImGroupCallListener 向业务侧发出通话开始/结束（含时长与原因）、成员进出事件
  *
@@ -297,6 +298,8 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
 
         String reason = parseReason(signal.getPayload());
         broadcastParticipant(room, "reject", userId, reason, userId);
+        // 所有受邀成员均已明确拒绝且无人加入时自动结束，主叫无需等待邀请超时
+        maybeEndWhenAllRejected(room);
 
         log.info("群通话成员拒绝邀请: roomId={}, userId={}, reason={}", room.getRoomId(), userId, reason);
     }
@@ -475,6 +478,46 @@ public class GroupCallService extends BaseHandler implements GroupCallListener {
         } catch (Exception e) {
             log.error("SFU 房间销毁失败, roomId={}", room.getRoomId(), e);
         }
+    }
+
+    /**
+     * 成员拒绝后兜底：RINGING 房间所有受邀成员均已明确拒绝且无人加入时自动结束通话
+     *
+     * 典型场景：仅邀请一人且对方拒绝，通话已无继续可能（协议不支持通话中追加邀请），
+     * 不自动结束会导致主叫在等待页停留至 inviteTimeoutSeconds 邀请超时。
+     * 仍有成员振铃（INVITED）或掉线未响应（LEFT）时不结束，由邀请超时兜底；
+     * 结束后向全部成员广播 ended（便于客户端清理界面）并触发业务结束回调补齐话单。
+     *
+     * @param room 成员拒绝后的房间（可能已结束）
+     */
+    private void maybeEndWhenAllRejected(GroupCallRoom room) {
+        GroupCallRoom current = sessionManager.getRoom(room.getRoomId());
+        if (current == null
+                || current.getStatus() != GroupCallRoomStatus.RINGING
+                || current.getJoinedMemberIds().size() != 1) {
+            return;
+        }
+        for (GroupCallMember member : current.getMembers().values()) {
+            if (member.getUserId().equals(current.getInitiatorId())) {
+                continue;
+            }
+            // 仍有成员未明确拒绝（振铃中/掉线），由邀请超时兜底
+            if (member.getStatus() != GroupCallMemberStatus.REJECTED) {
+                return;
+            }
+        }
+        GroupCallRoom ended = sessionManager.endRoom(current.getRoomId());
+        if (ended == null) {
+            return;
+        }
+        destroySfuRoom(ended);
+
+        fireCallEnd(ended, "rejected");
+        // ended 通知所有成员便于清理界面（含拒绝者，其引擎空闲时自动忽略）
+        broadcastParticipant(ended, "ended", ended.getInitiatorId(), "rejected", null);
+
+        log.info("群通话全部受邀成员已拒绝自动结束: roomId={}, group={}",
+                ended.getRoomId(), ended.getGroupId());
     }
 
     // ====================== 业务事件 ======================

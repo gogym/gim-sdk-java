@@ -134,12 +134,23 @@ class GroupCallServiceTest {
      * @return 房间ID
      */
     private String startRoom(String groupId, String initiatorId) {
+        return startRoom(groupId, initiatorId, "u2", "u3");
+    }
+
+    /**
+     * 发起群通话（callId 固定为 call-1，受邀成员自定义）
+     *
+     * @return 房间ID
+     */
+    private String startRoom(String groupId, String initiatorId, String... inviteeIds) {
+        String invitees = String.join(",",
+                java.util.Arrays.stream(inviteeIds).map(id -> "\"" + id + "\"").toArray(String[]::new));
         ImProto.RtcGroup request = ImProto.RtcGroup.newBuilder()
                 .setSignalType(GroupSignalType.GROUP_CALL_REQUEST.getCode())
                 .setSenderId(initiatorId)
                 .setGroupId(groupId)
                 .setCallId("call-1")
-                .setPayload("{\"callType\":\"video\",\"inviteeIds\":[\"u2\",\"u3\"]}")
+                .setPayload("{\"callType\":\"video\",\"inviteeIds\":[" + invitees + "]}")
                 .build();
         service.handle(null, null, initiatorId, request);
 
@@ -320,6 +331,35 @@ class GroupCallServiceTest {
         // 无成员加入，房间 RINGING 且仅发起人一人：不应被自动结束
         GroupCallRoom room = manager.getRoomByGroup("g11");
         assertNotNull(room);
+        assertEquals(GroupCallRoomStatus.RINGING, room.getStatus());
+        assertTrue(manager.isUserBusy("u1"));
+    }
+
+    // ====================== 全员拒绝自动结束 ======================
+
+    @Test
+    @DisplayName("全员拒绝自动结束：仅邀请一人且对方拒绝时房间立即结束，主叫无需等待邀请超时")
+    void allRejectedAutoEndsSingleInvitee() {
+        String roomId = startRoom("g12", "u1", "u2");
+
+        service.handle(null, null, "u2", group(GroupSignalType.GROUP_CALL_REJECT, "u2", "g12", roomId, null));
+
+        assertNull(manager.getRoom(roomId), "唯一受邀成员拒绝后房间应立即结束移除");
+        assertFalse(manager.isUserBusy("u1"), "主叫占用应立即释放");
+        assertTrue(events.stream().anyMatch(e -> e.startsWith("end:rejected:")),
+                "自动结束应触发 onCallEnd(rejected)");
+    }
+
+    @Test
+    @DisplayName("全员拒绝自动结束：仍有成员振铃时不触发，由邀请超时兜底")
+    void partialRejectKeepsRoomAlive() {
+        String roomId = startRoom("g13", "u1", "u2", "u3");
+
+        service.handle(null, null, "u2", group(GroupSignalType.GROUP_CALL_REJECT, "u2", "g13", roomId, null));
+
+        // u3 仍在振铃，房间应保持 RINGING
+        GroupCallRoom room = manager.getRoom(roomId);
+        assertNotNull(room, "仍有成员振铃时房间不应结束");
         assertEquals(GroupCallRoomStatus.RINGING, room.getStatus());
         assertTrue(manager.isUserBusy("u1"));
     }
