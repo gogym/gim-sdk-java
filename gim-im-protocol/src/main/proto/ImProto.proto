@@ -82,6 +82,7 @@ message DeliveryAck {
 message ReadReceipt {
   string conversationId = 1;  // 会话ID
   string lastReadMsgId  = 2;  // 最后已读的消息ID
+  string receiverId     = 3;  // 接收该回执的对方userId（单聊必填；群聊留空，由使用方通过回调处理）
 }
 
 // cmd = 15: 消息撤回请求（客户端 → 服务端）
@@ -89,6 +90,7 @@ message MsgRecallRequest {
   string msgId          = 1;  // 要撤回的消息ID
   string conversationId = 2;  // 会话ID
   int32  chatType       = 3;  // 1-单聊 2-群聊
+  string receiverId     = 4;  // 撤回通知的接收方userId（单聊必填；群聊留空，服务端按群成员广播）
 }
 
 // cmd = 16: 消息撤回通知（服务端 → 客户端，推送给对方）

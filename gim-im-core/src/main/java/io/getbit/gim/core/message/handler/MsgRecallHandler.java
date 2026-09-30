@@ -17,9 +17,9 @@ import java.util.List;
  * 消息撤回处理器
  *
  * 处理流程：
- * 1. 解析撤回请求（msgId, conversationId, chatType）
+ * 1. 解析撤回请求（msgId, conversationId, chatType, receiverId）
  * 2. 回复发送方 ServerAck（成功）
- * 3. 推送撤回通知给对方
+ * 3. 推送撤回通知给对方（单聊直接投递给请求携带的 receiverId）
  *    - 单聊 → 通知接收者
  *    - 群聊 → 通知所有群成员（排除操作者）
  * 4. 触发 ImEventListener.onMessageRecalled 回调（使用方负责 DB 更新）
@@ -66,7 +66,7 @@ public class MsgRecallHandler extends BaseHandler {
             channel.writeAndFlush(ack);
 
             // 2. 推送撤回通知给对方
-            pushRecallNotify(msgId, conversationId, userId, chatType);
+            pushRecallNotify(msgId, conversationId, userId, chatType, recallReq.getReceiverId());
 
             // 3. 触发回调（使用方负责 DB 更新、权限校验等）
             for (ImEventListener listener : eventListeners) {
@@ -89,22 +89,21 @@ public class MsgRecallHandler extends BaseHandler {
 
     /**
      * 推送撤回通知：单聊推给接收者，群聊推给所有群成员（排除操作者）
+     *
+     * @param receiverId 客户端上报的撤回通知接收方userId（单聊必填）
      */
-    private void pushRecallNotify(String msgId, String conversationId, String userId, int chatType) {
+    private void pushRecallNotify(String msgId, String conversationId, String userId, int chatType,
+                                  String receiverId) {
         ImProto.Packet recallNotify = PacketCodec.buildMsgRecallNotifyPacket(
                 msgId, conversationId, userId, chatType);
 
         if (chatType == 1) {
-            // 单聊：从 conversationId 解析对方 userId
-            // conversationId 格式由使用方定义，常见格式为 minId_maxId
-            // 这里通过 routeToUser 投递给会话对方
-            // 如果无法确定对方ID，使用方可通过 onMessageRecalled 回调自行处理
-            String receiverId = parseReceiverFromConversation(conversationId, userId);
-            if (receiverId != null) {
+            // 单聊：直接投递给客户端上报的 receiverId
+            if (receiverId != null && !receiverId.isEmpty()) {
                 routeToUser(receiverId, recallNotify);
                 log.debug("单聊撤回通知已推送: msgId={}, to={}", msgId, receiverId);
             } else {
-                log.warn("单聊撤回: 无法从 conversationId={} 解析接收者", conversationId);
+                log.warn("单聊撤回: 请求未携带 receiverId，无法推送撤回通知: msgId={}, conversationId={}", msgId, conversationId);
             }
 
         } else if (chatType == 2) {

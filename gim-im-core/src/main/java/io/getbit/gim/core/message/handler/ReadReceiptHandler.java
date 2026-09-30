@@ -45,13 +45,14 @@ public class ReadReceiptHandler extends BaseHandler {
             log.debug("已读回执: userId={}, conversation={}, lastReadMsg={}",
                     userId, conversationId, lastReadMsgId);
 
-            // 单聊：从 conversationId 解析对方 userId，转发已读回执给对方
-            String otherUserId = parseReceiverFromConversation(conversationId, userId);
-            if (otherUserId != null) {
-                // 构建转发包（携带已读信息）
+            // 单聊：客户端上报的 receiverId 即转发目标；群聊 receiverId 留空，走回调由使用方处理
+            String otherUserId = readReceipt.getReceiverId();
+            if (otherUserId != null && !otherUserId.isEmpty()) {
+                // 构建转发包（携带已读信息，receiverId 回填为原发送方）
                 ImProto.ReadReceipt fwdReceipt = ImProto.ReadReceipt.newBuilder()
                         .setConversationId(conversationId)
                         .setLastReadMsgId(lastReadMsgId)
+                        .setReceiverId(userId)
                         .build();
                 ImProto.Packet fwdPacket = PacketCodec.create(Cmd.READ_RECEIPT, 0, fwdReceipt);
                 boolean delivered = routeToUser(otherUserId, fwdPacket);
@@ -60,8 +61,7 @@ public class ReadReceiptHandler extends BaseHandler {
                     log.debug("已读回执目标用户离线: to={}", otherUserId);
                 }
             } else {
-                // 无法解析对方ID（可能是群聊会话或格式不匹配）
-                // 通过回调让使用方处理
+                // 群聊回执（receiverId 留空）：通过回调让使用方处理
                 for (ImEventListener listener : eventListeners) {
                     try {
                         listener.onReadReceipt(packet);

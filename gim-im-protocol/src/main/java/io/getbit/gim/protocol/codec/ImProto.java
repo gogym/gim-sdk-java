@@ -8041,6 +8041,26 @@ java.lang.String defaultValue) {
      */
     com.google.protobuf.ByteString
         getLastReadMsgIdBytes();
+
+    /**
+     * <pre>
+     * 接收该回执的对方userId（单聊必填；群聊留空，由使用方通过回调处理）
+     * </pre>
+     *
+     * <code>string receiverId = 3;</code>
+     * @return The receiverId.
+     */
+    java.lang.String getReceiverId();
+    /**
+     * <pre>
+     * 接收该回执的对方userId（单聊必填；群聊留空，由使用方通过回调处理）
+     * </pre>
+     *
+     * <code>string receiverId = 3;</code>
+     * @return The bytes for receiverId.
+     */
+    com.google.protobuf.ByteString
+        getReceiverIdBytes();
   }
   /**
    * <pre>
@@ -8070,6 +8090,7 @@ java.lang.String defaultValue) {
     private ReadReceipt() {
       conversationId_ = "";
       lastReadMsgId_ = "";
+      receiverId_ = "";
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -8184,6 +8205,53 @@ java.lang.String defaultValue) {
       }
     }
 
+    public static final int RECEIVERID_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object receiverId_ = "";
+    /**
+     * <pre>
+     * 接收该回执的对方userId（单聊必填；群聊留空，由使用方通过回调处理）
+     * </pre>
+     *
+     * <code>string receiverId = 3;</code>
+     * @return The receiverId.
+     */
+    @java.lang.Override
+    public java.lang.String getReceiverId() {
+      java.lang.Object ref = receiverId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        receiverId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * 接收该回执的对方userId（单聊必填；群聊留空，由使用方通过回调处理）
+     * </pre>
+     *
+     * <code>string receiverId = 3;</code>
+     * @return The bytes for receiverId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getReceiverIdBytes() {
+      java.lang.Object ref = receiverId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        receiverId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -8204,6 +8272,9 @@ java.lang.String defaultValue) {
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(lastReadMsgId_)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 2, lastReadMsgId_);
       }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(receiverId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 3, receiverId_);
+      }
       getUnknownFields().writeTo(output);
     }
     private int computeSerializedSize_0() {
@@ -8213,6 +8284,9 @@ java.lang.String defaultValue) {
       }
       if (!com.google.protobuf.GeneratedMessage.isStringEmpty(lastReadMsgId_)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(2, lastReadMsgId_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(receiverId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(3, receiverId_);
       }
       return size;
     }
@@ -8242,6 +8316,8 @@ java.lang.String defaultValue) {
           .equals(other.getConversationId())) return false;
       if (!getLastReadMsgId()
           .equals(other.getLastReadMsgId())) return false;
+      if (!getReceiverId()
+          .equals(other.getReceiverId())) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -8257,6 +8333,8 @@ java.lang.String defaultValue) {
       hash = (53 * hash) + getConversationId().hashCode();
       hash = (37 * hash) + LASTREADMSGID_FIELD_NUMBER;
       hash = (53 * hash) + getLastReadMsgId().hashCode();
+      hash = (37 * hash) + RECEIVERID_FIELD_NUMBER;
+      hash = (53 * hash) + getReceiverId().hashCode();
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -8394,6 +8472,7 @@ java.lang.String defaultValue) {
         bitField0_ = 0;
         conversationId_ = "";
         lastReadMsgId_ = "";
+        receiverId_ = "";
         return this;
       }
 
@@ -8433,6 +8512,9 @@ java.lang.String defaultValue) {
         if (((from_bitField0_ & 0x00000002) != 0)) {
           result.lastReadMsgId_ = lastReadMsgId_;
         }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.receiverId_ = receiverId_;
+        }
       }
 
       @java.lang.Override
@@ -8455,6 +8537,11 @@ java.lang.String defaultValue) {
         if (!other.getLastReadMsgId().isEmpty()) {
           lastReadMsgId_ = other.lastReadMsgId_;
           bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getReceiverId().isEmpty()) {
+          receiverId_ = other.receiverId_;
+          bitField0_ |= 0x00000004;
           onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
@@ -8491,6 +8578,11 @@ java.lang.String defaultValue) {
                 bitField0_ |= 0x00000002;
                 break;
               } // case 18
+              case 26: {
+                receiverId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -8692,6 +8784,98 @@ java.lang.String defaultValue) {
         return this;
       }
 
+      private java.lang.Object receiverId_ = "";
+      /**
+       * <pre>
+       * 接收该回执的对方userId（单聊必填；群聊留空，由使用方通过回调处理）
+       * </pre>
+       *
+       * <code>string receiverId = 3;</code>
+       * @return The receiverId.
+       */
+      public java.lang.String getReceiverId() {
+        java.lang.Object ref = receiverId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          receiverId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * 接收该回执的对方userId（单聊必填；群聊留空，由使用方通过回调处理）
+       * </pre>
+       *
+       * <code>string receiverId = 3;</code>
+       * @return The bytes for receiverId.
+       */
+      public com.google.protobuf.ByteString
+          getReceiverIdBytes() {
+        java.lang.Object ref = receiverId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          receiverId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * 接收该回执的对方userId（单聊必填；群聊留空，由使用方通过回调处理）
+       * </pre>
+       *
+       * <code>string receiverId = 3;</code>
+       * @param value The receiverId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setReceiverId(
+          java.lang.String value) {
+        java.util.Objects.requireNonNull(value);
+        receiverId_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * 接收该回执的对方userId（单聊必填；群聊留空，由使用方通过回调处理）
+       * </pre>
+       *
+       * <code>string receiverId = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearReceiverId() {
+        receiverId_ = getDefaultInstance().getReceiverId();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * 接收该回执的对方userId（单聊必填；群聊留空，由使用方通过回调处理）
+       * </pre>
+       *
+       * <code>string receiverId = 3;</code>
+       * @param value The bytes for receiverId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setReceiverIdBytes(
+          com.google.protobuf.ByteString value) {
+        java.util.Objects.requireNonNull(value);
+        checkByteStringIsUtf8(value);
+        receiverId_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:gim.im.ReadReceipt)
     }
 
@@ -8796,6 +8980,26 @@ java.lang.String defaultValue) {
      * @return The chatType.
      */
     int getChatType();
+
+    /**
+     * <pre>
+     * 撤回通知的接收方userId（单聊必填；群聊留空，服务端按群成员广播）
+     * </pre>
+     *
+     * <code>string receiverId = 4;</code>
+     * @return The receiverId.
+     */
+    java.lang.String getReceiverId();
+    /**
+     * <pre>
+     * 撤回通知的接收方userId（单聊必填；群聊留空，服务端按群成员广播）
+     * </pre>
+     *
+     * <code>string receiverId = 4;</code>
+     * @return The bytes for receiverId.
+     */
+    com.google.protobuf.ByteString
+        getReceiverIdBytes();
   }
   /**
    * <pre>
@@ -8825,6 +9029,7 @@ java.lang.String defaultValue) {
     private MsgRecallRequest() {
       msgId_ = "";
       conversationId_ = "";
+      receiverId_ = "";
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -8954,6 +9159,53 @@ java.lang.String defaultValue) {
       return chatType_;
     }
 
+    public static final int RECEIVERID_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object receiverId_ = "";
+    /**
+     * <pre>
+     * 撤回通知的接收方userId（单聊必填；群聊留空，服务端按群成员广播）
+     * </pre>
+     *
+     * <code>string receiverId = 4;</code>
+     * @return The receiverId.
+     */
+    @java.lang.Override
+    public java.lang.String getReceiverId() {
+      java.lang.Object ref = receiverId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        receiverId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * 撤回通知的接收方userId（单聊必填；群聊留空，服务端按群成员广播）
+     * </pre>
+     *
+     * <code>string receiverId = 4;</code>
+     * @return The bytes for receiverId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getReceiverIdBytes() {
+      java.lang.Object ref = receiverId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        receiverId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -8977,6 +9229,9 @@ java.lang.String defaultValue) {
       if (chatType_ != 0) {
         output.writeInt32(3, chatType_);
       }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(receiverId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 4, receiverId_);
+      }
       getUnknownFields().writeTo(output);
     }
     private int computeSerializedSize_0() {
@@ -8990,6 +9245,9 @@ java.lang.String defaultValue) {
       if (chatType_ != 0) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(3, chatType_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(receiverId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(4, receiverId_);
       }
       return size;
     }
@@ -9021,6 +9279,8 @@ java.lang.String defaultValue) {
           .equals(other.getConversationId())) return false;
       if (getChatType()
           != other.getChatType()) return false;
+      if (!getReceiverId()
+          .equals(other.getReceiverId())) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -9038,6 +9298,8 @@ java.lang.String defaultValue) {
       hash = (53 * hash) + getConversationId().hashCode();
       hash = (37 * hash) + CHATTYPE_FIELD_NUMBER;
       hash = (53 * hash) + getChatType();
+      hash = (37 * hash) + RECEIVERID_FIELD_NUMBER;
+      hash = (53 * hash) + getReceiverId().hashCode();
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -9176,6 +9438,7 @@ java.lang.String defaultValue) {
         msgId_ = "";
         conversationId_ = "";
         chatType_ = 0;
+        receiverId_ = "";
         return this;
       }
 
@@ -9218,6 +9481,9 @@ java.lang.String defaultValue) {
         if (((from_bitField0_ & 0x00000004) != 0)) {
           result.chatType_ = chatType_;
         }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.receiverId_ = receiverId_;
+        }
       }
 
       @java.lang.Override
@@ -9244,6 +9510,11 @@ java.lang.String defaultValue) {
         }
         if (other.getChatType() != 0) {
           setChatType(other.getChatType());
+        }
+        if (!other.getReceiverId().isEmpty()) {
+          receiverId_ = other.receiverId_;
+          bitField0_ |= 0x00000008;
+          onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -9284,6 +9555,11 @@ java.lang.String defaultValue) {
                 bitField0_ |= 0x00000004;
                 break;
               } // case 24
+              case 34: {
+                receiverId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -9525,6 +9801,98 @@ java.lang.String defaultValue) {
       public Builder clearChatType() {
         bitField0_ = (bitField0_ & ~0x00000004);
         chatType_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object receiverId_ = "";
+      /**
+       * <pre>
+       * 撤回通知的接收方userId（单聊必填；群聊留空，服务端按群成员广播）
+       * </pre>
+       *
+       * <code>string receiverId = 4;</code>
+       * @return The receiverId.
+       */
+      public java.lang.String getReceiverId() {
+        java.lang.Object ref = receiverId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          receiverId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * 撤回通知的接收方userId（单聊必填；群聊留空，服务端按群成员广播）
+       * </pre>
+       *
+       * <code>string receiverId = 4;</code>
+       * @return The bytes for receiverId.
+       */
+      public com.google.protobuf.ByteString
+          getReceiverIdBytes() {
+        java.lang.Object ref = receiverId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          receiverId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * 撤回通知的接收方userId（单聊必填；群聊留空，服务端按群成员广播）
+       * </pre>
+       *
+       * <code>string receiverId = 4;</code>
+       * @param value The receiverId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setReceiverId(
+          java.lang.String value) {
+        java.util.Objects.requireNonNull(value);
+        receiverId_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * 撤回通知的接收方userId（单聊必填；群聊留空，服务端按群成员广播）
+       * </pre>
+       *
+       * <code>string receiverId = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearReceiverId() {
+        receiverId_ = getDefaultInstance().getReceiverId();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * 撤回通知的接收方userId（单聊必填；群聊留空，服务端按群成员广播）
+       * </pre>
+       *
+       * <code>string receiverId = 4;</code>
+       * @param value The bytes for receiverId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setReceiverIdBytes(
+          com.google.protobuf.ByteString value) {
+        java.util.Objects.requireNonNull(value);
+        checkByteStringIsUtf8(value);
+        receiverId_ = value;
+        bitField0_ |= 0x00000008;
         onChanged();
         return this;
       }
@@ -17159,7 +17527,7 @@ java.lang.String defaultValue) {
 
     /**
      * <pre>
-     * 通话唯一ID（服务端创建会话时生成，回传给双方）
+     * 通话唯一ID（主叫未传时由服务端创建会话生成：回传主叫走 callAck(9)，转发被叫走 callRequest(4)）
      * </pre>
      *
      * <code>string callId = 5;</code>
@@ -17168,7 +17536,7 @@ java.lang.String defaultValue) {
     java.lang.String getCallId();
     /**
      * <pre>
-     * 通话唯一ID（服务端创建会话时生成，回传给双方）
+     * 通话唯一ID（主叫未传时由服务端创建会话生成：回传主叫走 callAck(9)，转发被叫走 callRequest(4)）
      * </pre>
      *
      * <code>string callId = 5;</code>
@@ -17388,7 +17756,7 @@ java.lang.String defaultValue) {
     private volatile java.lang.Object callId_ = "";
     /**
      * <pre>
-     * 通话唯一ID（服务端创建会话时生成，回传给双方）
+     * 通话唯一ID（主叫未传时由服务端创建会话生成：回传主叫走 callAck(9)，转发被叫走 callRequest(4)）
      * </pre>
      *
      * <code>string callId = 5;</code>
@@ -17409,7 +17777,7 @@ java.lang.String defaultValue) {
     }
     /**
      * <pre>
-     * 通话唯一ID（服务端创建会话时生成，回传给双方）
+     * 通话唯一ID（主叫未传时由服务端创建会话生成：回传主叫走 callAck(9)，转发被叫走 callRequest(4)）
      * </pre>
      *
      * <code>string callId = 5;</code>
@@ -18148,7 +18516,7 @@ java.lang.String defaultValue) {
       private java.lang.Object callId_ = "";
       /**
        * <pre>
-       * 通话唯一ID（服务端创建会话时生成，回传给双方）
+       * 通话唯一ID（主叫未传时由服务端创建会话生成：回传主叫走 callAck(9)，转发被叫走 callRequest(4)）
        * </pre>
        *
        * <code>string callId = 5;</code>
@@ -18168,7 +18536,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * 通话唯一ID（服务端创建会话时生成，回传给双方）
+       * 通话唯一ID（主叫未传时由服务端创建会话生成：回传主叫走 callAck(9)，转发被叫走 callRequest(4)）
        * </pre>
        *
        * <code>string callId = 5;</code>
@@ -18189,7 +18557,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * 通话唯一ID（服务端创建会话时生成，回传给双方）
+       * 通话唯一ID（主叫未传时由服务端创建会话生成：回传主叫走 callAck(9)，转发被叫走 callRequest(4)）
        * </pre>
        *
        * <code>string callId = 5;</code>
@@ -18206,7 +18574,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * 通话唯一ID（服务端创建会话时生成，回传给双方）
+       * 通话唯一ID（主叫未传时由服务端创建会话生成：回传主叫走 callAck(9)，转发被叫走 callRequest(4)）
        * </pre>
        *
        * <code>string callId = 5;</code>
@@ -18220,7 +18588,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * 通话唯一ID（服务端创建会话时生成，回传给双方）
+       * 通话唯一ID（主叫未传时由服务端创建会话生成：回传主叫走 callAck(9)，转发被叫走 callRequest(4)）
        * </pre>
        *
        * <code>string callId = 5;</code>
@@ -18294,7 +18662,7 @@ java.lang.String defaultValue) {
 
     /**
      * <pre>
-     * 信令类型（与 RtcSignal 枚举一致，1~8 媒体信令，9~16 群通话生命周期信令）
+     * 信令类型（与 RtcSignal 枚举一致，1~8 媒体信令，20~27 群通话生命周期信令，mediaState=100 跨场景共用）
      * </pre>
      *
      * <code>int32 signalType = 1;</code>
@@ -18467,7 +18835,7 @@ java.lang.String defaultValue) {
     private int signalType_ = 0;
     /**
      * <pre>
-     * 信令类型（与 RtcSignal 枚举一致，1~8 媒体信令，9~16 群通话生命周期信令）
+     * 信令类型（与 RtcSignal 枚举一致，1~8 媒体信令，20~27 群通话生命周期信令，mediaState=100 跨场景共用）
      * </pre>
      *
      * <code>int32 signalType = 1;</code>
@@ -19173,7 +19541,7 @@ java.lang.String defaultValue) {
       private int signalType_ ;
       /**
        * <pre>
-       * 信令类型（与 RtcSignal 枚举一致，1~8 媒体信令，9~16 群通话生命周期信令）
+       * 信令类型（与 RtcSignal 枚举一致，1~8 媒体信令，20~27 群通话生命周期信令，mediaState=100 跨场景共用）
        * </pre>
        *
        * <code>int32 signalType = 1;</code>
@@ -19185,7 +19553,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * 信令类型（与 RtcSignal 枚举一致，1~8 媒体信令，9~16 群通话生命周期信令）
+       * 信令类型（与 RtcSignal 枚举一致，1~8 媒体信令，20~27 群通话生命周期信令，mediaState=100 跨场景共用）
        * </pre>
        *
        * <code>int32 signalType = 1;</code>
@@ -19201,7 +19569,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * 信令类型（与 RtcSignal 枚举一致，1~8 媒体信令，9~16 群通话生命周期信令）
+       * 信令类型（与 RtcSignal 枚举一致，1~8 媒体信令，20~27 群通话生命周期信令，mediaState=100 跨场景共用）
        * </pre>
        *
        * <code>int32 signalType = 1;</code>
@@ -19901,11 +20269,12 @@ java.lang.String defaultValue) {
       "\005value\030\002 \001(\t:\0028\001\"[\n\tServerAck\022\027\n\017clientR" +
       "equestId\030\001 \001(\t\022\023\n\013serverMsgId\030\002 \001(\t\022\014\n\004c" +
       "ode\030\003 \001(\005\022\022\n\nserverTime\030\004 \001(\003\".\n\013Deliver" +
-      "yAck\022\r\n\005msgId\030\001 \001(\t\022\020\n\010senderId\030\002 \001(\t\"<\n" +
+      "yAck\022\r\n\005msgId\030\001 \001(\t\022\020\n\010senderId\030\002 \001(\t\"P\n" +
       "\013ReadReceipt\022\026\n\016conversationId\030\001 \001(\t\022\025\n\r" +
-      "lastReadMsgId\030\002 \001(\t\"K\n\020MsgRecallRequest\022" +
-      "\r\n\005msgId\030\001 \001(\t\022\026\n\016conversationId\030\002 \001(\t\022\020" +
-      "\n\010chatType\030\003 \001(\005\"^\n\017MsgRecallNotify\022\r\n\005m" +
+      "lastReadMsgId\030\002 \001(\t\022\022\n\nreceiverId\030\003 \001(\t\"" +
+      "_\n\020MsgRecallRequest\022\r\n\005msgId\030\001 \001(\t\022\026\n\016co" +
+      "nversationId\030\002 \001(\t\022\020\n\010chatType\030\003 \001(\005\022\022\n\n" +
+      "receiverId\030\004 \001(\t\"^\n\017MsgRecallNotify\022\r\n\005m" +
       "sgId\030\001 \001(\t\022\026\n\016conversationId\030\002 \001(\t\022\022\n\nop" +
       "eratorId\030\003 \001(\t\022\020\n\010chatType\030\004 \001(\005\"D\n\022Onli" +
       "neStatusNotify\022\016\n\006userId\030\001 \001(\t\022\016\n\006status" +
@@ -20000,13 +20369,13 @@ java.lang.String defaultValue) {
     internal_static_gim_im_ReadReceipt_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gim_im_ReadReceipt_descriptor,
-        new java.lang.String[] { "ConversationId", "LastReadMsgId", });
+        new java.lang.String[] { "ConversationId", "LastReadMsgId", "ReceiverId", });
     internal_static_gim_im_MsgRecallRequest_descriptor =
       getDescriptor().getMessageType(10);
     internal_static_gim_im_MsgRecallRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gim_im_MsgRecallRequest_descriptor,
-        new java.lang.String[] { "MsgId", "ConversationId", "ChatType", });
+        new java.lang.String[] { "MsgId", "ConversationId", "ChatType", "ReceiverId", });
     internal_static_gim_im_MsgRecallNotify_descriptor =
       getDescriptor().getMessageType(11);
     internal_static_gim_im_MsgRecallNotify_fieldAccessorTable = new

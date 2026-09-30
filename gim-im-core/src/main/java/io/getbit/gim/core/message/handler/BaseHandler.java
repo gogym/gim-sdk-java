@@ -130,35 +130,6 @@ public abstract class BaseHandler {
         return userRouteService.isLocal(userId);
     }
 
-    // ====================== 会话解析工具 ======================
-
-    /**
-     * 从 conversationId 中解析对方 userId
-     * 支持格式：minId_maxId（数字排序的会话ID）
-     * 如果 userId 是其中一方，返回另一方；否则返回 null
-     *
-     * @param conversationId 会话ID
-     * @param userId         当前用户ID
-     * @return 对方userId，无法解析返回null
-     */
-    protected String parseReceiverFromConversation(String conversationId, String userId) {
-        if (conversationId == null || conversationId.isEmpty()) {
-            return null;
-        }
-        int idx = conversationId.indexOf('_');
-        if (idx > 0 && idx < conversationId.length() - 1) {
-            String a = conversationId.substring(0, idx);
-            String b = conversationId.substring(idx + 1);
-            if (a.equals(userId)) {
-                return b;
-            }
-            if (b.equals(userId)) {
-                return a;
-            }
-        }
-        return null;
-    }
-
     // ====================== 离线消息回调 ======================
 
     /**
