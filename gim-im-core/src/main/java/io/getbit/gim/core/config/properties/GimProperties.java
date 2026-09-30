@@ -177,6 +177,14 @@ public class GimProperties {
         }
 
         /**
+         * 是否开启已读回执（默认开启，关闭后不注册 ReadReceiptHandler）
+         */
+        public Builder readReceiptEnabled(boolean enable) {
+            props.getMsg().setReadReceiptEnabled(enable);
+            return this;
+        }
+
+        /**
          * 自定义配置（用于 Builder 未覆盖的场景）
          */
         public Builder customize(java.util.function.Consumer<GimProperties> customizer) {

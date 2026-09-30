@@ -256,24 +256,30 @@ public class GimBootstrap {
                     .redisAdapter(redisAdapter)
                     .redisSubscriber(subscriber)
                     .clusterRouter(clusterRouter)
-                    .handlerFactory(f -> List.of(
-                            new HeartbeatHandler(f),
-                            new SingleChatHandler(f, idGenerator, messageAckTracker, friendProvider),
-                            new GroupChatHandler(f, idGenerator, messageAckTracker, groupProvider),
-                            new DeliveryAckHandler(f, messageAckTracker),
-                            new ReadReceiptHandler(f),
-                            new MsgRecallHandler(f, groupProvider)
-                    ))
+                    .handlerFactory(f -> {
+                        List<BaseHandler> handlers = new ArrayList<>();
+                        handlers.add(new HeartbeatHandler(f));
+                        handlers.add(new SingleChatHandler(f, idGenerator, messageAckTracker, friendProvider));
+                        handlers.add(new GroupChatHandler(f, idGenerator, messageAckTracker, groupProvider));
+                        handlers.add(new DeliveryAckHandler(f, messageAckTracker));
+                        // 已读回执开关：关闭时不注册 Handler，cmd=14 由 Dispatcher 记日志后丢弃
+                        if (config.getMsg().isReadReceiptEnabled()) {
+                            handlers.add(new ReadReceiptHandler(f));
+                        }
+                        handlers.add(new MsgRecallHandler(f, groupProvider));
+                        return handlers;
+                    })
                     .postBuildHook(postBuildHook)
                     .build();
 
             // 注入 MessageAckTracker 到健康指标，用于监控待确认消息数
             facade.getHealthIndicator().setMessageAckTracker(messageAckTracker);
 
-            log.info("GIM SDK 组件组装完成, serverId={}, cluster={}, friend={}, ackTimeout={}s, autoRewrite={}",
+            log.info("GIM SDK 组件组装完成, serverId={}, cluster={}, friend={}, ackTimeout={}s, autoRewrite={}, readReceipt={}",
                     config.getServerId(), config.isEnableCluster(),
                     friendNotifyService != null ? "enabled" : "disabled",
-                    config.getMsg().getAckTimeoutSeconds(), autoRewrite);
+                    config.getMsg().getAckTimeoutSeconds(), autoRewrite,
+                    config.getMsg().isReadReceiptEnabled() ? "enabled" : "disabled");
 
             return new Assembly(facade, clusterRouter);
         }
