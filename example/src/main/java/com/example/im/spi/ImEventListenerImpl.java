@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 gogym
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.example.im.spi;
 
 import io.getbit.gim.core.spi.ImEventListener;
@@ -18,6 +34,8 @@ import org.springframework.stereotype.Component;
  *   <li>onMessageRecalled — 消息撤回（可更新 DB 消息状态）</li>
  *   <li>onReceivedMessage — 消息回调（可持久化到 DB / MQ）</li>
  * </ul>
+ *
+ * @author gogym
  */
 @Component
 @Slf4j
