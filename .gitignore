@@ -4,6 +4,3 @@
 /.idea
 /.idea
 /.gen_tmp
-
-# GitHub Wiki content lives in a separate git repository (gim-sdk-java.wiki.git),
-# nested under this path. Main repo must ignore it.
