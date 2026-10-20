@@ -1,5 +1,7 @@
 # GIM IM SDK
 
+[**中文**](README.md) | [English](README_EN.md)
+
 高性能、开箱即用的 Java IM 即时通讯 SDK，基于 **Netty + Protobuf** 构建，支持单聊、群聊、消息路由、ACK 可靠投递、心跳保活、WebRTC 音视频信令等能力。
 
 A high-performance, cluster-ready IM SDK for Java built on **Netty + Protobuf**, covering 1:1 chat, group chat, routing, delivery ACK, heartbeat and WebRTC signaling.
@@ -300,6 +302,7 @@ ctx.start();
 
 完整文档位于仓库 `wiki/` 目录，同步发布到 GitHub Wiki：
 
+- English documentation: see [README_EN.md](README_EN.md) and the `wiki/en/` directory ([Wiki Home (EN)](wiki/en/Home.md))
 - [Wiki 首页](wiki/Home.md)
 - [快速开始](wiki/快速开始.md)
 - [架构概览](wiki/架构概览.md)
