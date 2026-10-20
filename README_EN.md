@@ -296,24 +296,24 @@ ctx.start();
 
 ## Documentation
 
-Full documentation lives in the repository `wiki/` directory and is published to the GitHub Wiki:
+Full documentation is published on the GitHub Wiki:
 
-- [Wiki Home (EN)](wiki/en/Home.md)
-- [Quick Start (EN)](wiki/en/Quick-Start.md)
-- [Architecture Overview (EN)](wiki/en/Architecture-Overview.md)
-- [Core Concept: Packet & Protocol Codec (EN)](wiki/en/Core-Concept-Packet-and-Codec.md)
-- [Core Concept: Connection & Authentication (EN)](wiki/en/Core-Concept-Connection-and-Auth.md)
-- [Core Concept: SPI Extensions (EN)](wiki/en/Core-Concept-SPI-Extensions.md)
-- [Messaging: 1:1 & Group Chat (EN)](wiki/en/Messaging-Single-and-Group-Chat.md)
-- [Messaging: Heartbeat & Reliable Delivery (EN)](wiki/en/Messaging-Heartbeat-and-Reliable-Delivery.md)
-- [Messaging: Recall, Read Receipt & Presence (EN)](wiki/en/Messaging-Recall-Read-Receipt-Online-Status.md)
-- [Cluster Deployment & Redis Integration (EN)](wiki/en/Cluster-Deployment-and-Redis.md)
-- [WebRTC: 1:1 Call (EN)](wiki/en/WebRTC-One-to-One-Call.md)
-- [WebRTC: Group Video Call (Mesh + SFU) (EN)](wiki/en/WebRTC-Group-Video-Call.md)
-- [Configuration Reference: GimProperties (EN)](wiki/en/Configuration-Reference-GimProperties.md)
-- [Health Check & Operations (EN)](wiki/en/Health-Check-and-Ops.md)
+- [Wiki Home (EN)](https://github.com/gogym/gim-sdk-java/wiki/Home-EN)
+- [Quick Start (EN)](https://github.com/gogym/gim-sdk-java/wiki/Quick-Start)
+- [Architecture Overview (EN)](https://github.com/gogym/gim-sdk-java/wiki/Architecture-Overview)
+- [Core Concept: Packet & Protocol Codec (EN)](https://github.com/gogym/gim-sdk-java/wiki/Core-Concept-Packet-and-Codec)
+- [Core Concept: Connection & Authentication (EN)](https://github.com/gogym/gim-sdk-java/wiki/Core-Concept-Connection-and-Auth)
+- [Core Concept: SPI Extensions (EN)](https://github.com/gogym/gim-sdk-java/wiki/Core-Concept-SPI-Extensions)
+- [Messaging: 1:1 & Group Chat (EN)](https://github.com/gogym/gim-sdk-java/wiki/Messaging-Single-and-Group-Chat)
+- [Messaging: Heartbeat & Reliable Delivery (EN)](https://github.com/gogym/gim-sdk-java/wiki/Messaging-Heartbeat-and-Reliable-Delivery)
+- [Messaging: Recall, Read Receipt & Presence (EN)](https://github.com/gogym/gim-sdk-java/wiki/Messaging-Recall-Read-Receipt-Online-Status)
+- [Cluster Deployment & Redis Integration (EN)](https://github.com/gogym/gim-sdk-java/wiki/Cluster-Deployment-and-Redis)
+- [WebRTC: 1:1 Call (EN)](https://github.com/gogym/gim-sdk-java/wiki/WebRTC-One-to-One-Call)
+- [WebRTC: Group Video Call (Mesh + SFU) (EN)](https://github.com/gogym/gim-sdk-java/wiki/WebRTC-Group-Video-Call)
+- [Configuration Reference: GimProperties (EN)](https://github.com/gogym/gim-sdk-java/wiki/Configuration-Reference-GimProperties)
+- [Health Check & Operations (EN)](https://github.com/gogym/gim-sdk-java/wiki/Health-Check-and-Ops)
 
-Chinese documentation: [Wiki 首页](wiki/Home.md) and the other pages under `wiki/`.
+Chinese documentation: [Wiki 首页](https://github.com/gogym/gim-sdk-java/wiki/Home) and the other pages on the [Wiki](https://github.com/gogym/gim-sdk-java/wiki).
 
 ---
 

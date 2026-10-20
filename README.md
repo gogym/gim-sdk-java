@@ -300,23 +300,23 @@ ctx.start();
 
 ## 文档索引 / Documentation
 
-完整文档位于仓库 `wiki/` 目录，同步发布到 GitHub Wiki：
+完整文档已发布到 GitHub Wiki：
 
-- English documentation: see [README_EN.md](README_EN.md) and the `wiki/en/` directory ([Wiki Home (EN)](wiki/en/Home.md))
-- [Wiki 首页](wiki/Home.md)
-- [快速开始](wiki/快速开始.md)
-- [架构概览](wiki/架构概览.md)
-- [核心概念：Packet 与协议编解码](wiki/核心概念：Packet与协议编解码.md)
-- [核心概念：连接与认证](wiki/核心概念：连接与认证.md)
-- [核心概念：SPI 扩展点](wiki/核心概念：SPI扩展点.md)
-- [消息能力：单聊与群聊](wiki/消息能力：单聊与群聊.md)
-- [消息能力：心跳与可靠投递](wiki/消息能力：心跳与可靠投递.md)
-- [消息能力：撤回、已读与在线状态](wiki/消息能力：撤回、已读与在线状态.md)
-- [集群部署与 Redis 集成](wiki/集群部署与Redis集成.md)
-- [WebRTC：1:1 通话](wiki/WebRTC：1对1通话.md)
-- [WebRTC：群视频通话（Mesh + SFU）](wiki/WebRTC：群视频通话.md)
-- [配置参考：GimProperties](wiki/配置参考：GimProperties.md)
-- [健康检查与运维](wiki/健康检查与运维.md)
+- English documentation: see [README_EN.md](README_EN.md) ([Wiki Home (EN)](https://github.com/gogym/gim-sdk-java/wiki/Home-EN))
+- [Wiki 首页](https://github.com/gogym/gim-sdk-java/wiki/Home)
+- [快速开始](https://github.com/gogym/gim-sdk-java/wiki/快速开始)
+- [架构概览](https://github.com/gogym/gim-sdk-java/wiki/架构概览)
+- [核心概念：Packet 与协议编解码](https://github.com/gogym/gim-sdk-java/wiki/核心概念：Packet与协议编解码)
+- [核心概念：连接与认证](https://github.com/gogym/gim-sdk-java/wiki/核心概念：连接与认证)
+- [核心概念：SPI 扩展点](https://github.com/gogym/gim-sdk-java/wiki/核心概念：SPI扩展点)
+- [消息能力：单聊与群聊](https://github.com/gogym/gim-sdk-java/wiki/消息能力：单聊与群聊)
+- [消息能力：心跳与可靠投递](https://github.com/gogym/gim-sdk-java/wiki/消息能力：心跳与可靠投递)
+- [消息能力：撤回、已读与在线状态](https://github.com/gogym/gim-sdk-java/wiki/消息能力：撤回、已读与在线状态)
+- [集群部署与 Redis 集成](https://github.com/gogym/gim-sdk-java/wiki/集群部署与Redis集成)
+- [WebRTC：1:1 通话](https://github.com/gogym/gim-sdk-java/wiki/WebRTC：1对1通话)
+- [WebRTC：群视频通话（Mesh + SFU）](https://github.com/gogym/gim-sdk-java/wiki/WebRTC：群视频通话)
+- [配置参考：GimProperties](https://github.com/gogym/gim-sdk-java/wiki/配置参考：GimProperties)
+- [健康检查与运维](https://github.com/gogym/gim-sdk-java/wiki/健康检查与运维)
 
 ---
 
